@@ -267,6 +267,13 @@ return [
             'can' => 'permiso.inicio',
             'icon_color' => 'color_icono'
         ],
+        [
+            'text' => 'Calificaciones',
+            'route'  => 'calificaciones.inicio',
+            'icon' => 'fa fa-graduation-cap',
+            // 'can' => 'permiso.inicio',
+            'icon_color' => 'color_icono'
+        ],
 
         /* [
             'type' => 'sidebar-menu-search',

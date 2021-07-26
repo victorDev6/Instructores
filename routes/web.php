@@ -34,3 +34,7 @@ Route::post('/Roles/guardar', 'RolesController@store')->name('roles.store');
 // permisos
 Route::get('/Permisos/inicio', 'PermisosController@index')->name('permisos.inicio');
 Route::post('/Permisos/guardar', 'PermisosController@store')->name('permisos.store');
+
+// calificaciones
+Route::get('/Calificaciones/inicio', 'calificaciones\CalificacionesController@index')->name('calificaciones.inicio');
+Route::post('/Calificaciones/guardar', 'calificaciones\CalificacionesController@update')->name('calificaciones.guardar');
