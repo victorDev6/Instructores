@@ -80,6 +80,7 @@
                             <table class="table table-bordered table-striped">
                                 <thead>
                                     <tr>
+                                        <th scope="col">N°</th>
                                         <th scope="col">MATR&Iacute;CULA</th>
                                         <th scope="col">ALUMNOS</th>
                                         <th scope="col" class="text-center" width="10%">FOLIO ASIGNADO</th>
@@ -88,8 +89,9 @@
                                 </thead>
                                 <tbody>
                                     <?php $cambios = false; ?>
-                                    @foreach ($alumnos as $a)
+                                    @foreach ($alumnos as $key => $a)
                                         <tr>
+                                            <td>{{$key + 1}}</td>
                                             <td> {{ $a->matricula }} </td>
                                             <td> {{ $a->alumno }} </td>
                                             <td class="text-center">
@@ -110,7 +112,8 @@
                                 <tfoot>
                                     <tr>
                                         @if (count($alumnos) > 0 and $fecha_valida >= 0 and $cambios == true)
-                                            <td colspan="4" class="text-right">
+                                            <td colspan="5" class="text-right">
+                                                {{ Form::button('GENERAR REPORTE PDF', ['id' => 'reporte', 'class' => 'btn btn-outline-info']) }}
                                                 {{ Form::button('GUARDAR CAMBIOS', ['id' => 'guardar', 'class' => 'btn btn-outline-success']) }}
                                             </td>
                                         @endif
@@ -130,8 +133,8 @@
 @section('js') 
     <script language="javascript">
         $(document).ready(function(){                
-            $("#guardar" ).click(function(){
-                if(confirm("Esta seguro de ejecutar la acción?")==true){
+            $("#guardar").click(function(){
+                if(confirm("¿Está seguro de ejecutar la acción?")==true){
                     $('#frm').attr('action', "{{route('calificaciones.guardar')}}");
                     $('#frm').attr('method', "post"); 
                     $('#frm').submit(); 
@@ -140,6 +143,15 @@
 
             $('.numero').keyup(function (){                    
                 this.value = (this.value + '').replace(/[^0-9NP]/g, '');
+            });
+
+            $('#reporte').click(function () {
+                if(confirm("¿Está seguro de generar el reporte de calificaciones?")==true){
+                    $('#frm').attr('action', "{{route('calificaciones.pdf')}}");
+                    $('#frm').attr('method', "post"); 
+                    $('#frm').attr('target', "_blanck"); 
+                    $('#frm').submit(); 
+                }
             });
         });       
     </script>  

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\calificaciones;
 
+use PDF;
 use App\tbl_cursos;
 use App\instructores;
 use Illuminate\Http\Request;
@@ -65,7 +66,44 @@ class CalificacionesController extends Controller {
             if($result) $message = "Operacion exitosa!!";        
         }else $message = "No existen cambios que guardar.";
 
-        // return redirect()->route('calificaciones.inicio')->with('success', 'ACTIVIDAD GUARDADA EXITOSAMENTE');
         return redirect('/Calificaciones/inicio')->with(['message'=>$message, 'clave'=>$clave]);
+    }
+
+    public function calificaciones(Request $request) {
+        $clave = $request->get('clave');
+        $file = "CALIFICACIONES_$clave.PDF";
+        if($clave) {
+            $curso = DB::connection('pgsql')->table('tbl_cursos')->select(
+                'tbl_cursos.*',
+                DB::raw('right(clave,4) as grupo'),
+                DB::raw("to_char(inicio, 'DD/MM/YYYY') as fechaini"),
+                DB::raw("to_char(termino, 'DD/MM/YYYY') as fechafin"),
+                'u.plantel'
+            )->where('clave',$clave);
+            // if($_SESSION['unidades']) $curso = $curso->whereIn('u.ubicacion',$_SESSION['unidades']);
+            $curso = $curso->leftjoin('tbl_unidades as u','u.unidad','tbl_cursos.unidad')->first();
+            if($curso) {
+                $consec_curso = $curso->id_curso; 
+                $fecha_termino = $curso->inicio;
+                $alumnos = DB::connection('pgsql')->table('tbl_inscripcion as i')->select(
+                        'i.matricula',
+                        'i.alumno',
+                        'i.calificacion'
+                    )->where('i.id_curso',$curso->id)
+                    ->where('i.status','INSCRITO')
+                    ->groupby('i.matricula','i.alumno','i.calificacion')
+                    ->orderby('i.alumno')
+                    ->get();
+                if(count($alumnos)==0){
+                    return "NO HAY ALUMNOS INSCRITOS";
+                    exit;
+                }               
+                $consec = 1;
+                $pdf = PDF::loadView('layouts.calificaciones.pdfCalificaciones',compact('curso','alumnos','consec'));        
+                $pdf->setPaper('Letter', 'landscape');
+                return $pdf->stream($file);  
+            } else return "Curso no v&aacute;lido para esta Unidad";
+        }
+        return "Clave no v&aacute;lida";
     }
 }
