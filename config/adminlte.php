@@ -274,6 +274,13 @@ return [
             // 'can' => 'permiso.inicio',
             'icon_color' => 'color_icono'
         ],
+        [
+            'text' => 'Lista de asistencia',
+            'route'  => 'asistencia.inicio',
+            'icon' => 'fa fa-list-ol',
+            // 'can' => 'permiso.inicio',
+            'icon_color' => 'color_icono'
+        ],
 
         /* [
             'type' => 'sidebar-menu-search',

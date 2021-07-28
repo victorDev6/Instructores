@@ -28,23 +28,15 @@
         <div class="card">
             <div class="card-header">Registrar Calificaciones</div>
             <div class="card-body">
-
-                {{-- <form action="{{ route('calificaciones.inicio') }}" method="get"> --}}
-                    {{-- @csrf --}}
-
-                    <div class="row">
-                        <div class="col-2">Clave de curso</div>
-                        <div class="col-4">
-                            {{-- <input class="form-control" id="clave" name="clave" type="text" value="{{ $clave }}"
-                                placeholder="clave del curso"> --}}
-                                {{ Form::text('clave', $clave, ['id'=>'clave', 'class' => 'form-control', 'placeholder' => 'CLAVE DEL CURSO', 'aria-label' => 'CLAVE DEL CURSO', 'required' => 'required', 'size' => 30]) }}
-                        </div>
-                        <div class="col">
-                            {{-- <button type="submit" class="btn btn-outline-primary">Buscar</button> --}}
-                            {{ Form::button('Buscar', ['class' => 'btn btn-outline-primary', 'type' => 'submit']) }}
-                        </div>
+                <div class="row">
+                    <div class="col-2">Clave de curso</div>
+                    <div class="col-4">
+                            {{ Form::text('clave', $clave, ['id'=>'clave', 'class' => 'form-control', 'placeholder' => 'CLAVE DEL CURSO', 'aria-label' => 'CLAVE DEL CURSO', 'required' => 'required', 'size' => 30]) }}
                     </div>
-                {{-- </form> --}}
+                    <div class="col">
+                        {{ Form::button('Buscar', ['class' => 'btn btn-outline-primary', 'type' => 'submit']) }}
+                    </div>
+                </div>
 
                 {{-- {{$curso}} --}}
                 @if (isset($curso))

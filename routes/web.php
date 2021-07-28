@@ -39,3 +39,6 @@ Route::post('/Permisos/guardar', 'PermisosController@store')->name('permisos.sto
 Route::get('/Calificaciones/inicio', 'calificaciones\CalificacionesController@index')->name('calificaciones.inicio');
 Route::post('/Calificaciones/guardar', 'calificaciones\CalificacionesController@update')->name('calificaciones.guardar');
 Route::post('/Calificaciones/pdf', 'calificaciones\CalificacionesController@calificaciones')->name('calificaciones.pdf');
+
+// lista de asistencia
+Route::get('/Asistencia/inicio', 'asistencia\AsistenciaController@index')->name('asistencia.inicio');
