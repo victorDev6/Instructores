@@ -45,4 +45,11 @@ class AsistenciaController extends Controller {
         return view('layouts.asistencia.registrarAsistencias', compact('clave', 'curso', 'dias', 'alumnos', 'message'));
     }
 
+    public function update(Request $request) {
+        $asistencias = $request->asistencias;
+        dd($asistencias);
+        // $myArray = json_decode($_POST['kvcArray']);
+        // dd($myArray);
+    }
+
 }

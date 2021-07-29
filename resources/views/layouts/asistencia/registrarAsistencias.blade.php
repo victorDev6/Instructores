@@ -8,6 +8,25 @@
             background-color: #541533;
         }
 
+        thead tr th { 
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: #ffffff;
+        }
+        .table-responsive { 
+            height:600px;
+            overflow:scroll;
+        } 
+
+        .static {
+            position: sticky;
+            left: 0;
+            /* z-index: 10; */
+            /* background-color: #ffffff; */
+        }
+        
+
     </style>
 @endsection
 
@@ -79,7 +98,7 @@
                                 <tbody>
                                     @foreach ($alumnos as $alumno)
                                         <tr>
-                                            <td>{{$alumno->alumno}}</td>
+                                            <td class="static">{{$alumno->alumno}}</td>
                                             @foreach ($dias as $dia)
                                                 <td onclick="abrirModal('{{$alumno->alumno}}', '{{$alumno->matricula}}', '{{$dia}}')">
                                                     <strong id="{{$alumno->matricula}}{{$dia}}"></strong>
@@ -99,7 +118,12 @@
                 @endif
             </div>
         </div>
-        {!! Form::close() !!} 
+        {!! Form::close() !!}
+        
+        <form id="formAsis" action="{{route('asistencia.guardar')}}" method="post">
+            @csrf
+            <input id="asistencias" name="asistencias" class="d-none">
+        </form>
     </div>
 
     <!-- Modal asistencia -->
@@ -146,10 +170,11 @@
                 $('#'+ matricula + fecha).html('x');
                 asistencia = 'no';
             }
-            temp = {matricula, fecha, asistencia};
+            temp = {matricula, fecha, asistencia,};
             arrayTemp.forEach(function myfunction(element, index, arr) {
                 if (element['matricula'] == matricula && element['fecha'] == fecha) {
                     arrayTemp.splice(index, 1);
+                    asis.splice(index, 1);
                 }
             });
             arrayTemp.push(temp);
@@ -157,7 +182,7 @@
         }
 
         $('#btnGuardar').click(function () {
-            console.log(arrayTemp);
+            
         });
     </script>
 @endsection

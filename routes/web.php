@@ -42,3 +42,4 @@ Route::post('/Calificaciones/pdf', 'calificaciones\CalificacionesController@cali
 
 // lista de asistencia
 Route::get('/Asistencia/inicio', 'asistencia\AsistenciaController@index')->name('asistencia.inicio');
+Route::post('/Asistencia/guardar', 'asistencia\AsistenciaController@update')->name('asistencia.guardar');
