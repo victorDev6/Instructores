@@ -1,7 +1,7 @@
-<!--ELABORO ROMELIA PEREZ - rpnanguelu@gmail.com-->
 <html>
 
 <head>
+    <title>LISTA DE CALIFICACIONES</title>
     <style>
         body {
             font-family: sans-serif;

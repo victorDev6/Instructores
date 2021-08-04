@@ -22,8 +22,8 @@
         .static {
             position: sticky;
             left: 0;
-            /* z-index: 10; */
-            /* background-color: #ffffff; */
+            z-index: 10;
+            background-color: #ffffff;
         }
         
 
@@ -33,16 +33,15 @@
 @section('content')
     
     <div class="container-fluid pt-4">
-        @if ($message)
-            <div class="row px-2">
-                <div class="col-md-12 alert alert-success">
-                    <p>{{ $message }}</p>
-                </div>
+        @if ($message = Session::get('success'))
+            <div class="alert alert-success">
+                <p>{{ $message }}</p>
             </div>
         @endif
 
         {{ Form::open(['route' => 'asistencia.inicio', 'method' => 'get', 'id'=>'frm']) }}
         {{csrf_field()}}
+        
         <div class="card">
             <div class="card-header">Registar Asistencia</div>
             <div class="card-body">
@@ -57,132 +56,118 @@
                 </div>
 
                 @if (isset($curso))
-                    <div class="row bg-secondary mt-3" style="padding:10px">
-                        <div class="form-group col-md-6">
-                            CURSO: <b>{{ $curso->curso }}</b>
+                    @if (count($alumnos) > 0)
+                        <div class="row bg-secondary mt-3" style="padding:10px">
+                            <div class="form-group col-md-6">
+                                CURSO: <b>{{ $curso->curso }}</b>
+                            </div>
+                            <div class="form-group col-md-4">
+                                INSTRUCTOR: <b>{{ $curso->nombre }}</b>
+                            </div>
+                            <div class="form-group col-md-2">
+                                DURACI&Oacute;N: <b>{{ $curso->dura }} hrs.</b>
+                            </div>
+                            <div class="form-group col-md-6">
+                                ESPECIALIDAD: <b>{{ $curso->espe }}</b>
+                            </div>
+                            <div class="form-group col-md-6">
+                                &Aacute;REA: <b>{{ $curso->area }}</b>
+                            </div>
+                            <div class="form-group col-md-6">
+                                FECHAS DEL <b> {{ $curso->inicio }}</b> AL <b>{{ $curso->termino }}</b>
+                            </div>
+                            <div class="form-group col-md-4">
+                                HORARIO: <b>{{ $curso->hini }} A {{ $curso->hfin }}</b>
+                            </div>
+                            <div class="form-group col-md-2">
+                                CICLO: <b>{{ $curso->ciclo }}</b>
+                            </div>
                         </div>
-                        <div class="form-group col-md-4">
-                            INSTRUCTOR: <b>{{ $curso->nombre }}</b>
-                        </div>
-                        <div class="form-group col-md-2">
-                            DURACI&Oacute;N: <b>{{ $curso->dura }} hrs.</b>
-                        </div>
-                        <div class="form-group col-md-6">
-                            ESPECIALIDAD: <b>{{ $curso->espe }}</b>
-                        </div>
-                        <div class="form-group col-md-6">
-                            &Aacute;REA: <b>{{ $curso->area }}</b>
-                        </div>
-                        <div class="form-group col-md-6">
-                            FECHAS DEL <b> {{ $curso->inicio }}</b> AL <b>{{ $curso->termino }}</b>
-                        </div>
-                        <div class="form-group col-md-4">
-                            HORARIO: <b>{{ $curso->hini }} A {{ $curso->hfin }}</b>
-                        </div>
-                        <div class="form-group col-md-2">
-                            CICLO: <b>{{ $curso->ciclo }}</b>
-                        </div>
-                    </div>
 
-                    <div class="row">
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Alumnos</th>
-                                        @foreach ($dias as $dia)
-                                            <th>{{$dia}}</th>
-                                        @endforeach
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($alumnos as $alumno)
+                        <div class="row">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped">
+                                    <thead>
                                         <tr>
-                                            <td class="static">{{$alumno->alumno}}</td>
+                                            <th>Alumnos</th>
                                             @foreach ($dias as $dia)
-                                                <td onclick="abrirModal('{{$alumno->alumno}}', '{{$alumno->matricula}}', '{{$dia}}')">
-                                                    <strong id="{{$alumno->matricula}}{{$dia}}"></strong>
-                                                </td>
+                                                <th>{{$dia}}</th>
+                                                <input class="d-none" type="text" name="fechas[]" value="{{$dia}}">
                                             @endforeach
                                         </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($alumnos as $alumno)
+                                            <input class="d-none" type="text" name="alumnos[]" value="{{$alumno->id}}">
+                                            <tr>
+                                                <td class="static">{{$alumno->alumno}}</td>
+                                                @foreach ($dias as $dia)
+                                                    <td>
+                                                        <div class="custom-control custom-checkbox d-flex justify-content-center">
+                                                            <input type="checkbox"
+                                                                @if ($alumno->asistencias != null)
+                                                                    @foreach ($alumno->asistencias as $asistencia)
+                                                                        @if ($asistencia['fecha'] == $dia && $asistencia['asistencia'] == true)
+                                                                            checked
+                                                                        @endif
+                                                                    @endforeach
+                                                                @endif
+                                                                value="{{ $alumno->id }} {{$dia}}"
+                                                                class="custom-control-input" name="asistencias[]"
+                                                                id="check + {{ $alumno->id }} + {{$dia}}">
+                                                            <label class="custom-control-label"
+                                                                for="check + {{ $alumno->id }} + {{$dia}}"></label>
+                                                        </div> 
+                                                    </td>
+                                                @endforeach
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col d-flex justify-content-end">
-                            <button id="btnGuardar" type="button" class="btn btn-primary">Guardar Asistencias</button>
+                        <div class="row">
+                            <div class="col d-flex justify-content-end mt-2">
+                                <button id="btnLista" type="button" class="btn btn-outline-info mr-2">GENERAR LISTA DE ASISTENCIA</button>
+                                <button id="btnGuardar" type="button" class="btn btn-outline-success">GUARDAR ASISTENCIAS</button>
+                            </div>
                         </div>
-                    </div>
+                    @else
+                        <div class="alert alert-success mt-4">
+                            <p>No hay alumnos registrados en el curso</p>
+                        </div>
+                    @endif
+                    
                 @endif
             </div>
         </div>
         {!! Form::close() !!}
-        
-        <form id="formAsis" action="{{route('asistencia.guardar')}}" method="post">
+
+        <form id="frmPdf" action="{{route('asistencia.pdf')}}" method="post">
             @csrf
-            <input id="asistencias" name="asistencias" class="d-none">
+            <input class="d-none" type="text" name="clave2" id="clave2" value="{{$clave}}">
         </form>
-    </div>
-
-    <!-- Modal asistencia -->
-    <div class="modal fade" id="modalAsistencia" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" 
-        aria-hidden="true" data-backdrop="static">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div style="background-color: #541533" class="modal-header text-white">
-                    <h6 id="title" class="modal-title"></h6>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-
-                <div class="modal-body py-5">
-                    <div class="row text-center">
-                        <div class="col"><button onclick="guardarAsistencia('asistencia')" style="width: 130px" type="button" class="btn btn-success">Asistencia</button></div>
-                        <div class="col"><button onclick="guardarAsistencia('falta')" style="width: 130px" type="button" class="btn btn-danger">Falta</button></div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
 @endsection
 
 @section('js')
     <script>
-        var arrayTemp = [];
-        var matricula, fecha;
-        function abrirModal(nombre, matricula, fecha) {
-            this.matricula = matricula;
-            this.fecha = fecha;
-            $('#title').html('Asistencia de ' + nombre);
-            $("#modalAsistencia").modal("show");
-        }
-
-        function guardarAsistencia(asis) {
-            var asistencia = '', temp = {};
-            if (asis == 'asistencia') {
-                $('#'+ matricula + fecha).html('*');
-                asistencia = 'si';
-            } else {
-                $('#'+ matricula + fecha).html('x');
-                asistencia = 'no';
-            }
-            temp = {matricula, fecha, asistencia,};
-            arrayTemp.forEach(function myfunction(element, index, arr) {
-                if (element['matricula'] == matricula && element['fecha'] == fecha) {
-                    arrayTemp.splice(index, 1);
-                    asis.splice(index, 1);
-                }
-            });
-            arrayTemp.push(temp);
-            $("#modalAsistencia").modal("hide");
-        }
-
         $('#btnGuardar').click(function () {
-            
+            if(confirm("¿Está seguro de guardar las asistencias?")==true){
+                $('#frm').attr('action', "{{route('asistencia.guardar')}}");
+                $('#frm').attr('method', "post"); 
+                $('#frm').submit(); 
+            }
+        });
+
+        $('#btnLista').click(function () {
+            if(confirm('¿Esta seguro de generar la lista de asistencia?') == true) {
+                // $('#frm').attr('action', "{{route('asistencia.pdf')}}");
+                // $('#frm').attr('method', "post");
+                $('#frmPdf').attr('target', "_blanck");  
+                $('#frmPdf').submit(); 
+            }
         });
     </script>
 @endsection

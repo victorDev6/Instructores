@@ -105,7 +105,7 @@
                                     <tr>
                                         @if (count($alumnos) > 0 and $fecha_valida >= 0 and $cambios == true)
                                             <td colspan="5" class="text-right">
-                                                {{ Form::button('GENERAR REPORTE PDF', ['id' => 'reporte', 'class' => 'btn btn-outline-info']) }}
+                                                {{ Form::button('GENERAR LISTA DE CALIFICACIONES', ['id' => 'reporte', 'class' => 'btn btn-outline-info']) }}
                                                 {{ Form::button('GUARDAR CAMBIOS', ['id' => 'guardar', 'class' => 'btn btn-outline-success']) }}
                                             </td>
                                         @endif
