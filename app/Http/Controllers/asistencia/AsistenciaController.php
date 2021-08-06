@@ -56,7 +56,6 @@ class AsistenciaController extends Controller
                     ->where('i.status', 'INSCRITO')
                     ->orderby('i.alumno')->get();
 
-                // dd(count($alumnos) > 0);
                 foreach ($alumnos as $key => $value) {
                     $value->asistencias = json_decode($value->asistencias, true);
                 }
@@ -120,7 +119,7 @@ class AsistenciaController extends Controller
                 DB::raw("to_char(termino, 'DD/MM/YYYY') as fechafin"),
                 'u.plantel',
                 )->where('clave',$clave);
-            $curso = $curso->leftjoin('tbl_unidades as u','u.unidad','tbl_cursos.unidad')            ->first();
+            $curso = $curso->leftjoin('tbl_unidades as u','u.unidad','tbl_cursos.unidad')->first();
             if ($curso) {
                 if ($curso->turnado == "UNIDAD" and $curso->status != "REPORTADO" and $curso->status != "CANCELADO") {
                     $alumnos = DB::connection('pgsql')->table('tbl_inscripcion as i')->select(

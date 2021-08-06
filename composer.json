@@ -19,6 +19,7 @@
         "laravel/ui": "2.4",
         "laravelcollective/html": "^6.0",
         "nesbot/carbon": "^2.51",
+        "spatie/array-to-xml": "^2.15",
         "spatie/laravel-permission": "^4.2"
     },
     "require-dev": {
