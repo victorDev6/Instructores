@@ -14,7 +14,9 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return view('auth/login');
+    // return view('auth/login');
+    
+    return redirect('login');
 });
 
 Auth::routes();
@@ -52,3 +54,4 @@ Route::post('/AddDocumentfirma/guardar', 'firmaElectronica\AddDocumentFirmaContr
 
 // firma electronica
 Route::get('/firma/inicio', 'firmaElectronica\FirmaController@index')->name('firma.inicio');
+Route::post('/firma/update', 'firmaElectronica\FirmaController@update')->name('firma.update');

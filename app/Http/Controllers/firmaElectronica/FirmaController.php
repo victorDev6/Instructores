@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers\firmaElectronica;
 
+use App\DocumentosFirmar;
 use Illuminate\Http\Request;
 use Spatie\ArrayToXml\ArrayToXml;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
+use Vyuldashev\XmlToArray\XmlToArray;
 
 class FirmaController extends Controller {
     
@@ -56,52 +60,90 @@ class FirmaController extends Controller {
             ], */
         ];
 
-        // $result = ArrayToXml::convert($array);
-        $result = ArrayToXml::convert($array, [
+        // por firmar : documentos donde su correo aparezca en el nodo firmantes
+        // $email = Auth::user()->email;
+        $email = 'BERNARDOABARCA2@HOTMAIL.COM'; 
+        $docsFirmar = DocumentosFirmar::where('status','!=','CANCELADO')
+                        ->whereRaw("EXISTS(SELECT TRUE FROM jsonb_array_elements(obj_documento->'firmantes'->'firmante'->0) x 
+                        WHERE x->'_attributes'->>'email_firmante' IN ('".$email."'))")->get();
+        $docsFirmados = DocumentosFirmar::where('status','!=','CANCELADO')
+                        ->whereRaw("EXISTS(SELECT TRUE FROM jsonb_array_elements(obj_documento->'firmantes'->'firmante'->0) x 
+                        WHERE x->'_attributes'->>'email_firmante' IN ('".$email."') 
+                        AND x->'_attributes'->>'firma_firmante' <> '')")->get();
+        $docsValidados = DocumentosFirmar::where('status', '=', 'VALIDADO')
+                        ->whereRaw("EXISTS(SELECT TRUE FROM jsonb_array_elements(obj_documento->'firmantes'->'firmante'->0) x 
+                        WHERE x->'_attributes'->>'email_firmante' IN ('".$email."'))")->get();
+
+        foreach ($docsFirmar as $value) {
+            $value->base64xml = base64_encode($value->documento);
+        }
+        
+        // dd($docsFirmar);
+        return view('layouts.firmaElectronica.firmaElectronica', compact('docsFirmar', 'email', 'docsFirmados', 'docsValidados'));
+    }
+
+    public function update(Request $request) {
+        $documento = DocumentosFirmar::where('id', $request->idFile)->first();
+
+        $obj_documento = json_decode($documento->obj_documento, true);
+        $obj_documento_interno = json_decode($documento->obj_documento_interno, true);
+        foreach ($obj_documento['firmantes']['firmante'][0] as $key => $value) {
+            if ($value['_attributes']['curp_firmante'] == $request->curp) {
+                $value['_attributes']['fecha_firmado_firmante'] = $request->fechaFirmado;
+                $value['_attributes']['no_serie_firmante'] = $request->serieFirmante; 
+                $value['_attributes']['firma_firmante'] = $request->firma;
+                $obj_documento['firmantes']['firmante'][0][$key] = $value;
+            }
+        }
+        foreach ($obj_documento_interno['firmantes']['firmante'][0] as $key => $value) {
+            if ($value['_attributes']['curp_firmante'] == $request->curp) {
+                $value['_attributes']['fecha_firmado_firmante'] = $request->fechaFirmado;
+                $value['_attributes']['no_serie_firmante'] = $request->serieFirmante; 
+                $value['_attributes']['firma_firmante'] = $request->firma;
+                $obj_documento_interno['firmantes']['firmante'][0][$key] = $value;
+            }
+        }
+
+        $array = XmlToArray::convert($documento->documento);
+        $array2 = XmlToArray::convert($documento->documento_interno);
+        $array['DocumentoChis']['firmantes'] = $obj_documento['firmantes'];
+        $array2['DocumentoChis']['firmantes'] = $obj_documento_interno['firmantes'];
+
+        $result = ArrayToXml::convert($obj_documento, [
             'rootElementName' => 'DocumentoChis',
             '_attributes' => [
-                'version' => '1.0',
-                'fecha_creacion' => '2021-08-05',
-                'no_oficio' => 'ICATECH/0001/2021',
-                'dependencia_origen' => 'INSTITUTO DE CAPACITACION Y VINCULACION TECNOLOGICA DEL ESTADO DE CHIAPAS',
-                'asunto_docto' => 'LISTA DE ASISTENCIA',
-                'tipo_docto' => 'ACS',
+                'version' => $array['DocumentoChis']['_attributes']['version'],
+                'fecha_creacion' => $array['DocumentoChis']['_attributes']['fecha_creacion'],
+                'no_oficio' => $array['DocumentoChis']['_attributes']['no_oficio'],
+                'dependencia_origen' => $array['DocumentoChis']['_attributes']['dependencia_origen'],
+                'asunto_docto' => $array['DocumentoChis']['_attributes']['asunto_docto'],
+                'tipo_docto' => $array['DocumentoChis']['_attributes']['tipo_docto'],
                 'xmlns' => 'http://firmaelectronica.chiapas.gob.mx/GCD/DoctoGCD',
             ],
         ]);
-        // true, 'UTF-8');
-        // dd($result);
-        
-        return view('layouts.firmaElectronica.firmaElectronica');
+
+        $result2 = ArrayToXml::convert($obj_documento_interno, [
+            'rootElementName' => 'DocumentoChis',
+            '_attributes' => [
+                'version' => $array2['DocumentoChis']['_attributes']['version'],
+                'fecha_creacion' => $array2['DocumentoChis']['_attributes']['fecha_creacion'],
+                'no_oficio' => $array2['DocumentoChis']['_attributes']['no_oficio'],
+                'dependencia_origen' => $array2['DocumentoChis']['_attributes']['dependencia_origen'],
+                'asunto_docto' => $array2['DocumentoChis']['_attributes']['asunto_docto'],
+                'tipo_docto' => $array2['DocumentoChis']['_attributes']['tipo_docto'],
+                'xmlns' => 'http://firmaelectronica.chiapas.gob.mx/GCD/DoctoGCD',
+            ],
+        ]);
+
+        DocumentosFirmar::where('id', $request->idFile)
+            ->update([
+                'obj_documento' => json_encode($obj_documento),
+                'obj_documento_interno' => json_encode($obj_documento_interno),
+                'documento' => $result,
+                'documento_interno' => $result2 
+            ]);
+
+        return redirect()->route('firma.inicio')->with('warning', 'Documento firmado exitosamente!');
     }
 
-    public function create()
-    {
-        //
-    }
-
-    public function store(Request $request)
-    {
-        //
-    }
-
-    public function show($id)
-    {
-        //
-    }
-
-    public function edit($id)
-    {
-        //
-    }
-
-    public function update(Request $request, $id)
-    {
-        //
-    }
-
-    public function destroy($id)
-    {
-        //
-    }
 }

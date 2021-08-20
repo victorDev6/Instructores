@@ -485,6 +485,16 @@ return [
                 ],
             ],
         ],
+        'validacion' => [
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'js',
+                    'asset' => false,
+                    'location' => 'http://ajax.aspnetcdn.com/ajax/jquery.validate/1.11.1/jquery.validate.min.js',
+                ],
+            ],
+        ],
     ],
 
     /*

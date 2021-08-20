@@ -16,17 +16,165 @@
 
 @section('content')
 
-    <div class="container-fluid text-center">
-        <div class="pt-5" id="vHTMLSignature"></div>
+    <div id="vHTMLSignature"></div>
+
+    <div class="container-fluid pt-3 px-0 py-0 mx-0 my-0">
+        <div class="row">
+            <div class="col">
+                @if ($message = Session::get('warning'))
+                    <div class="alert alert-info">
+                        <p>{{ $message }}</p>
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Mis documentos</div>
+            <div class="card-body px-0">
+                <div class="row">
+                    <div class="col">
+                        {{-- encabezado --}}
+                        <nav>
+                            <div class="nav nav-tabs nav-fill" id="nav-tab" role="tablist">
+                                <a class="nav-item nav-link active" id="nav-home-tab" data-toggle="tab" href="#nav-home" role="tab" aria-controls="nav-home" aria-selected="true">Por Firmar</a>
+                                <a class="nav-item nav-link" id="nav-firmados-tab" data-toggle="tab" href="#nav-firmados" role="tab" aria-controls="nav-firmados" aria-selected="false">Firmados</a>
+                                <a class="nav-item nav-link" id="nav-validados-tab" data-toggle="tab" href="#nav-validados" role="tab" aria-controls="nav-validados" aria-selected="false">Validados</a>
+                                </div>
+                        </nav>
+
+                        
+                        {{-- contenido --}}
+                        <div class="tab-content py-3 px-sm-0" id="nav-tabContent">
+                            {{-- Por Firmar --}}
+                            <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+                                @if ($docsFirmar != "[]")
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col">Nombre del documento</th>
+                                                    <th scope="col">Ver documento</th>
+                                                    <th scope="col">Firmantes</th>
+                                                    <th scope="col">Creado</th>
+                                                    <th scope="col">Firmar</th>                                             </tr>
+                                            </thead>
+    
+                                            <tbody>
+                                                @foreach ($docsFirmar as $key => $docFirmar)
+                                                    @php
+                                                        $firmantes = '';
+                                                        $nameArchivo = '';
+                                                        $obj = json_decode($docFirmar->obj_documento, true);
+                                                        $nameArchivo = $obj['archivo']['_attributes']['nombre_archivo'];
+
+                                                        foreach ($obj['firmantes']['firmante'][0] as $value) {
+                                                            $firmantes = $firmantes.$value['_attributes']['nombre_firmante'].', ';
+                                                            if($value['_attributes']['email_firmante'] == $email){
+                                                                $curp = $value['_attributes']['curp_firmante'];
+                                                            }
+                                                        }
+                                                        $firmantes = substr($firmantes, 0, -2);
+                                                    @endphp
+                                                    <tr>
+                                                        <td><small>{{$nameArchivo}}</small></td>
+                                                        <td>
+                                                            <a href="{{ $docFirmar->link_pdf }}" target="_blank" rel="{{ $docFirmar->link_pdf }}">
+                                                                <img class="rounded" src="{{ asset('img/pdf.png') }}" alt="{{ asset('img/pdf.png') }}" width="30px" height="30px">
+                                                            </a>
+                                                        </td>
+                                                        <td><small>{{$firmantes}}</small></td>
+                                                        <td><small>{{$docFirmar->created_at->format('d-m-Y')}}</small></td>
+                                                        <td>
+                                                            <button class="btn btn-outline-primary" href="#" data-toggle="modal" data-target="#mdlLoadViewSignature" onclick="abriModal('{{$key}}')">firmar</button>
+                                                        </td>
+                                                        <input class="d-none" value="{{$docFirmar->id}}" name="idFile{{$key}}" id="idFile{{$key}}" type="text">
+                                                        <input class="d-none" value="{{$docFirmar->cadena_original}}" name="cadena{{$key}}" id="cadena{{$key}}" type="text">
+                                                        <input class="d-none" value="{{$docFirmar->base64xml}}" name="xml{{$key}}" id="xml{{$key}}" type="text">
+                                                        <input class="d-none" value="{{$curp}}" name="curp{{$key}}" id="curp{{$key}}" type="text">
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @else
+                                    <div class="row mt-5">
+                                        <div class="col d-flex justify-content-center">
+                                            <strong>Sin documentos por firmar</strong>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- Firmados --}}
+                            <div class="tab-pane fade" id="nav-firmados" role="tabpanel" aria-labelledby="nav-home-tab">
+                                @if ($docsFirmados != "[]")
+                                    <table class="table table-bordered table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Firmados</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            <td>'jh</td>
+                                        </tbody>
+                                    </table>
+                                @else
+                                    <div class="row mt-3">
+                                        <div class="col d-flex justify-content-center">
+                                            <strong>Sin Documentos Firmados</strong>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- Validados --}}
+                            <div class="tab-pane fade" id="nav-validados" role="tabpanel" aria-labelledby="nav-home-tab">
+                                @if ($docsValidados != "[]")
+                                    <table class="table table-bordered table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">validados</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            <td>'jh</td>
+                                        </tbody>
+                                    </table>
+                                @else
+                                    <div class="row mt-3">
+                                        <div class="col d-flex justify-content-center">
+                                            <strong>Sin Documentos Validados</strong>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <form id="formUpdate" action="{{route('firma.update')}}" method="post">
+                @csrf
+                <input class="d-none" id="fechaFirmado" name="fechaFirmado" type="text">
+                <input class="d-none" id="serieFirmante" name="serieFirmante" type="text">
+                <input class="d-none" id="firma" name="firma" type="text">
+                <input class="d-none" id="curp" name="curp" type="text">
+                <input class="d-none" id="idFile" name="idFile" type="text">
+            </form>
+        </div>
     </div>
     
 @endsection
 
 @section('js')
     {{-- js bootstrap --}}
-    {{-- <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/plugins/jquery-3.4.1/jquery-3.4.1.min.js"></script> --}}
-    {{-- <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/plugins/bootstrap-4.3.1/js/bootstrap.min.js"></script> --}}
-    {{-- <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/plugins/jasny-bootstrap4/js/jasny-bootstrap.min.js"></script> --}}
+    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/plugins/jquery-3.4.1/jquery-3.4.1.min.js"></script>
+    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/plugins/bootstrap-4.3.1/js/bootstrap.min.js"></script>
+    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/plugins/jasny-bootstrap4/js/jasny-bootstrap.min.js"></script>
+
+    
 
     {{-- js para poder firmar --}}
     <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/sjcl.js"></script>
@@ -75,5 +223,64 @@
     <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-scg/dataTransportSign.js"></script>
     <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/signedjs-2.1/signature-spv015_doctos.js"></script>
     
-    
+
+    <script>
+        var cadena = '', xmlBase64 = '', curp = '', idFile = '';
+        $(document).ready(function() {
+            $('#btnsignature').attr('onclick', 'firmar();');
+        });
+
+        function abriModal(key) {
+            cadena = $('#cadena'+ key).val();
+            xmlBase64 = $('#xml'+ key).val();
+            curp = $('#curp'+ key).val();
+            idFile = $('#idFile' + key).val();
+        }
+
+        function firmar() {
+            // console.log(cadena);
+            // console.log(xmlBase64);
+            // console.log(curp);
+
+            var vresponseSignature = sign(
+                cadena,
+                xmlBase64,
+                curp,
+                $('#password').val(),
+                39,
+                'dwLChYOVylB9htqD9qIaSVHddKzWKiqXqmh7fFRHwFJk2x'
+            );
+
+            console.log(vresponseSignature);
+
+            if (vresponseSignature.statusResponse) {
+                /* $('#txtsignedCurp').val(vresponseSignature.curp);
+                $('#txtcode').val(vresponseSignature.codeResponse);
+                $('#txtdescription').val(vresponseSignature.descriptionResponse);
+                $('#txtserie').val(vresponseSignature.certifiedSeries);
+                $('#txtsecuencie').val(vresponseSignature.sequenceResponse);
+                $('#txtsignedDate').val(vresponseSignature.signedDateResponse);
+                $('#txtsignature').val(vresponseSignature.signature);
+                $('#txtsubject').val(vresponseSignature.certifiedSubject); */
+
+                console.log(vresponseSignature.date);
+                console.log(vresponseSignature.certifiedSeries);
+                console.log(vresponseSignature.sign);
+
+                $('#fechaFirmado').val(vresponseSignature.date);
+                $('#serieFirmante').val(vresponseSignature.certifiedSeries)
+                $('#firma').val(vresponseSignature.sign);
+                $('#curp').val(vresponseSignature.curp);
+                $('#idFile').val(idFile);
+                $('#formUpdate').submit();
+                
+            } else {
+                $('#txtcode').val(vresponseSignature.codeResponse);
+                $('#txtdescription').val(vresponseSignature.descriptionResponse);
+            }
+        }
+
+    </script>
+
+
 @endsection

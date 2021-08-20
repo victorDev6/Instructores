@@ -2,10 +2,17 @@
 
 namespace App\Http\Controllers\firmaElectronica;
 
+use Carbon\Carbon;
 use App\Funcionarios;
-use App\Http\Controllers\Controller;
 use App\instructores;
+use App\DocumentosFirmar;
+use Spatie\PdfToText\Pdf;
 use Illuminate\Http\Request;
+use Spatie\ArrayToXml\ArrayToXml;
+use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 class AddDocumentFirmaController extends Controller {
 
@@ -32,7 +39,235 @@ class AddDocumentFirmaController extends Controller {
     }
 
     public function save(Request $request) {
-        dd($request);
+        $dataEmisor = Auth::user()->tipo_usuario == 1 
+            ? instructores::where('id', '=', Auth::user()->id_sivyc)->first()
+            : Funcionarios::where('id', '=', Auth::user()->id_sivyc)->first();
+        // on esta activo el switch
+        if ($request->hasFile('doc')) {
+            if ($request->firmas != null) { // si hay firmantes, se crea el arreglo para el xml
+                $nameFile = $request->file('doc')->getClientOriginalName();
+                $numFirmantes = count($request->firmas);
+
+                $arrayFirmantes = [];
+                $arrayFirmantes2 = [];
+                if ($request->firmare != null) {
+                    $numFirmantes++;
+                    $temp = ['_attributes' => 
+                                [
+                                    'curp_firmante' => $dataEmisor->curp, 
+                                    'nombre_firmante' => $dataEmisor->nombre.' '.$dataEmisor->apellidoPaterno.' '.$dataEmisor->apellidoMaterno, 
+                                    'email_firmante' => $dataEmisor->correo, 
+                                    'tipo_firmante' => 'FM'
+                                ]
+                            ];
+
+                    $temp2 = ['_attributes' => 
+                                [
+                                    'curp_firmante' => $dataEmisor->curp, 
+                                    'nombre_firmante' => $dataEmisor->nombre.' '.$dataEmisor->apellidoPaterno.' '.$dataEmisor->apellidoMaterno, 
+                                    'email_firmante' => $dataEmisor->correo, 
+                                    'tipo_firmante' => 'FM',
+                                    'tipo_usuario' => Auth::user()->tipo_usuario,
+                                    'fecha_firmado_firmante' => '',
+                                    'no_serie_firmante' => '',
+                                    'firma_firmante' => ''
+                                ]
+                            ];
+                    array_push($arrayFirmantes, $temp);
+                    array_push($arrayFirmantes2, $temp2);
+                }
+
+                foreach ($request->firmas as $firmante) {
+                    $array = explode('-', $firmante);
+                    if ($array[0] == 'Instructor') {
+                        $dataFirmante = instructores::where('id', '=', $array[1])->first();
+                        $temp = ['_attributes' => 
+                            [
+                                'curp_firmante' => $dataFirmante->curp, 
+                                'nombre_firmante' => $dataFirmante->nombre.' '.$dataFirmante->apellidoPaterno.' '.$dataFirmante->apellidoMaterno, 
+                                'email_firmante' => $dataFirmante->correo, 
+                                'tipo_firmante' => 'FM'
+                            ]
+                        ];
+
+                        $temp2 = ['_attributes' => 
+                            [
+                                'curp_firmante' => $dataFirmante->curp, 
+                                'nombre_firmante' => $dataFirmante->nombre.' '.$dataFirmante->apellidoPaterno.' '.$dataFirmante->apellidoMaterno, 
+                                'email_firmante' => $dataFirmante->correo, 
+                                'tipo_firmante' => 'FM',
+                                'tipo_usuario' => 1,
+                                'fecha_firmado_firmante' => '',
+                                'no_serie_firmante' => '',
+                                'firma_firmante' => ''
+                            ]
+                        ];
+                    } else {
+                        $dataFirmante = Funcionarios::where('id', '=', $array[1])->first();
+                        $temp = ['_attributes' => 
+                            [
+                                'curp_firmante' => $dataFirmante->curp, 
+                                'nombre_firmante' => $dataFirmante->nombre.' '.$dataFirmante->apellidoPaterno.' '.$dataFirmante->apellidoMaterno, 
+                                'email_firmante' => $dataFirmante->email, 
+                                'tipo_firmante' => 'FM'
+                            ]
+                        ];
+
+                        $temp2 = ['_attributes' => 
+                            [
+                                'curp_firmante' => $dataFirmante->curp, 
+                                'nombre_firmante' => $dataFirmante->nombre.' '.$dataFirmante->apellidoPaterno.' '.$dataFirmante->apellidoMaterno, 
+                                'email_firmante' => $dataFirmante->email, 
+                                'tipo_firmante' => 'FM',
+                                'tipo_usuario' => 2,
+                                'fecha_firmado_firmante' => '',
+                                'no_serie_firmante' => '',
+                                'firma_firmante' => ''
+                            ]
+                        ];
+                    }
+                    array_push($arrayFirmantes, $temp);
+                    array_push($arrayFirmantes2, $temp2);
+                }
+
+                // eliminamos el archivo pdf
+                // $filePath = Storage::url('/uploadFiles/DocumentosFirmas/'.Auth::user()->id.'/'.$nameFile);
+                // if(Storage::exists($filePath)) { // si ya existe un archivo con el mismo nombre se reemplaza
+                    // Storage::delete($filePath);
+                // }
+                
+                // $text = Pdf::getText('C:/xampp/htdocs/instructores/storage/app/public/uploadFiles/DocumentosFirmas/4/LISTA_ASISTENCIA_7X-21-ARFT-EXT-0006.PDF', 'c:/Program Files/Git/mingw64/bin/pdftotext');
+
+                $text = Pdf::getText($request->file('doc'), 'c:/Program Files/Git/mingw64/bin/pdftotext');
+                // dd($text);
+
+                // otro metodo para leer el pddf
+                // $reader = new \Asika\Pdf2text;
+                // $text = $reader->decode($request->file('doc'));
+                // dd($text);
+
+                $ArrayXml = [
+                    'emisor' => [
+                        '_attributes' => [
+                            'nombre_emisor' => $dataEmisor->nombre.' '.$dataEmisor->apellidoPaterno.' '.$dataEmisor->apellidoMaterno,
+                            'cargo_emisor' => Auth::user()->tipo_usuario == 1 ? 'INSTRUCTOR' : $dataEmisor->puesto,
+                            'dependencia_emisor' => 'INSTITUTO DE CAPACITACION Y VINCULACION TECNOLOGICA'
+                        ],
+                    ],
+                    'archivo' => [
+                        '_attributes' => [
+                            'nombre_archivo' => $nameFile,
+                            'checksum_archivo' => utf8_encode($text)
+                        ],
+                        'cuerpo' => ['Por medio de la presente me permito solicitar el archivo '.$nameFile]
+                    ],
+                    'firmantes' => [
+                        '_attributes' => [
+                            'num_firmantes' => $numFirmantes
+                        ],
+                        'firmante' => [
+                            $arrayFirmantes
+                        ]
+                    ], 
+                ];
+
+                $ArrayXml2 = [
+                    'emisor' => [
+                        '_attributes' => [
+                            'nombre_emisor' => $dataEmisor->nombre.' '.$dataEmisor->apellidoPaterno.' '.$dataEmisor->apellidoMaterno,
+                            'cargo_emisor' => Auth::user()->tipo_usuario == 1 ? 'INSTRUCTOR' : $dataEmisor->puesto,
+                            'dependencia_emisor' => 'INSTITUTO DE CAPACITACION Y VINCULACION TECNOLOGICA',
+                            'email' => Auth::user()->email
+                        ],
+                    ],
+                    'archivo' => [
+                        '_attributes' => [
+                            'nombre_archivo' => $nameFile,
+                            'checksum_archivo' => utf8_encode($text)
+                        ],
+                        'cuerpo' => ['Por medio de la presente me permito solicitar el archivo '.$nameFile]
+                    ],
+                    'firmantes' => [
+                        '_attributes' => [
+                            'num_firmantes' => $numFirmantes
+                        ],
+                        'firmante' => [
+                            $arrayFirmantes2
+                        ]
+                    ], 
+                ];
+
+                $date = Carbon::now();
+                $month = $date->month < 10 ? '0'.$date->month : $date->month;
+                $day = $date->day < 10 ? '0'.$date->day : $date->day;
+                $hour = $date->hour < 10 ? '0'.$date->hour : $date->hour;
+                $minute = $date->minute < 10 ? '0'.$date->minute : $date->minute;
+                $second = $date->second < 10 ? '0'.$date->second : $date->second;
+                $dateFormat = $date->year.'-'.$month.'-'.$day.'T'.$hour.':'.$minute.':'.$second;
+                
+                $result = ArrayToXml::convert($ArrayXml, [
+                    'rootElementName' => 'DocumentoChis',
+                    '_attributes' => [
+                        'version' => '1.0',
+                        'fecha_creacion' => $dateFormat,
+                        'no_oficio' => 'ICATECH/0001/2021',
+                        'dependencia_origen' => 'INSTITUTO DE CAPACITACION Y VINCULACION TECNOLOGICA DEL ESTADO DE CHIAPAS',
+                        'asunto_docto' => $request->tipo_documento,
+                        'tipo_docto' => Auth::user()->tipo_usuario == 1 ? 'ACS' : 'CNT',
+                        'xmlns' => 'http://firmaelectronica.chiapas.gob.mx/GCD/DoctoGCD',
+                    ],
+                ]);
+
+                $result2 = ArrayToXml::convert($ArrayXml2, [
+                    'rootElementName' => 'DocumentoChis',
+                    '_attributes' => [
+                        'version' => '1.0',
+                        'fecha_creacion' => $dateFormat,
+                        'no_oficio' => 'ICATECH/0001/2021',
+                        'dependencia_origen' => 'INSTITUTO DE CAPACITACION Y VINCULACION TECNOLOGICA DEL ESTADO DE CHIAPAS',
+                        'asunto_docto' => $request->tipo_documento,
+                        'tipo_docto' => Auth::user()->tipo_usuario == 1 ? 'ACS' : 'CNT',
+                        'xmlns' => 'http://firmaelectronica.chiapas.gob.mx/GCD/DoctoGCD',
+                    ],
+                ]);
+
+                $xmlBase64 = base64_encode($result);
+                $response = Http::post('https://interopera.chiapas.gob.mx/FirmadoElectronicoDocumentos/api/v1/DocumentoXml/CadenaOriginalBase64', [
+                    'xml_OriginalBase64' => $xmlBase64,
+                    'apiKey' => 'dwLChYOVylB9htqD9qIaSVHddKzWKiqXqmh7fFRHwFJk2x'
+                ]);
+
+                if ($response->json()['cadenaOriginal'] != null) {
+                    $urlFile = $this->uploadFileServer($request->file('doc'), $nameFile);
+
+                    $dataInsert = new DocumentosFirmar();
+                    $dataInsert->obj_documento = json_encode($ArrayXml);
+                    $dataInsert->obj_documento_interno = json_encode($ArrayXml2);
+                    $dataInsert->status = 'EnFirma';
+                    $dataInsert->link_pdf = $urlFile;
+                    $dataInsert->cadena_original = $response->json()['cadenaOriginal'];
+                    $dataInsert->documento = $result;
+                    $dataInsert->documento_interno = $result2;
+                    $dataInsert->save();
+
+                    return redirect()->route('addDocument.inicio')->with('warning', 'Se agrego el documento correctamente, puede ver el status en el que se encuentra en el apartado Firma Electronica');
+                } else {
+                    return redirect()->route('addDocument.inicio')->with('danger', 'Ocurrio un error al obtener la cadena original, por favor intente de nuevo');
+                }
+            } else { // no hay firmantes
+                return redirect()->route('addDocument.inicio')->with('warning', 'No se agregaron firmantes');
+            }
+        } else {
+            return redirect()->route('addDocument.inicio')->with('warning', 'Debe seleccionar un archivo PDF');
+        }
+    }
+
+    protected function uploadFileServer($file, $name) {
+        // $extensionFile = $file->getClientOriginalExtension();
+        // $path = '/'.$subPath;
+        $file->storeAs('/uploadFiles/DocumentosFirmas/'.Auth::user()->id, $name);
+        $url = Storage::url('/uploadFiles/DocumentosFirmas/'.Auth::user()->id.'/'.$name);
+        return $url;
     }
 
 }
