@@ -68,9 +68,10 @@ class AddDocumentFirmaController extends Controller {
                                     'email_firmante' => $dataEmisor->correo, 
                                     'tipo_firmante' => 'FM',
                                     'tipo_usuario' => Auth::user()->tipo_usuario,
+                                    'puesto_firmante' => 'INSTRUCTOR',
                                     'fecha_firmado_firmante' => '',
                                     'no_serie_firmante' => '',
-                                    'firma_firmante' => ''
+                                    'firma_firmante' => '',
                                 ]
                             ];
                     array_push($arrayFirmantes, $temp);
@@ -97,6 +98,7 @@ class AddDocumentFirmaController extends Controller {
                                 'email_firmante' => $dataFirmante->correo, 
                                 'tipo_firmante' => 'FM',
                                 'tipo_usuario' => 1,
+                                'puesto_firmante' => 'INSTRUCTOR',
                                 'fecha_firmado_firmante' => '',
                                 'no_serie_firmante' => '',
                                 'firma_firmante' => ''
@@ -120,6 +122,7 @@ class AddDocumentFirmaController extends Controller {
                                 'email_firmante' => $dataFirmante->email, 
                                 'tipo_firmante' => 'FM',
                                 'tipo_usuario' => 2,
+                                'puesto_firmante' => $dataFirmante->puesto,
                                 'fecha_firmado_firmante' => '',
                                 'no_serie_firmante' => '',
                                 'firma_firmante' => ''
@@ -130,17 +133,8 @@ class AddDocumentFirmaController extends Controller {
                     array_push($arrayFirmantes2, $temp2);
                 }
 
-                // eliminamos el archivo pdf
-                // $filePath = Storage::url('/uploadFiles/DocumentosFirmas/'.Auth::user()->id.'/'.$nameFile);
-                // if(Storage::exists($filePath)) { // si ya existe un archivo con el mismo nombre se reemplaza
-                    // Storage::delete($filePath);
-                // }
-                
-                // $text = Pdf::getText('C:/xampp/htdocs/instructores/storage/app/public/uploadFiles/DocumentosFirmas/4/LISTA_ASISTENCIA_7X-21-ARFT-EXT-0006.PDF', 'c:/Program Files/Git/mingw64/bin/pdftotext');
-
                 $text = Pdf::getText($request->file('doc'), 'c:/Program Files/Git/mingw64/bin/pdftotext');
-                // dd($text);
-
+                
                 // otro metodo para leer el pddf
                 // $reader = new \Asika\Pdf2text;
                 // $text = $reader->decode($request->file('doc'));
@@ -210,7 +204,7 @@ class AddDocumentFirmaController extends Controller {
                     '_attributes' => [
                         'version' => '1.0',
                         'fecha_creacion' => $dateFormat,
-                        'no_oficio' => 'ICATECH/0001/2021',
+                        'no_oficio' => $nameFile,
                         'dependencia_origen' => 'INSTITUTO DE CAPACITACION Y VINCULACION TECNOLOGICA DEL ESTADO DE CHIAPAS',
                         'asunto_docto' => $request->tipo_documento,
                         'tipo_docto' => Auth::user()->tipo_usuario == 1 ? 'ACS' : 'CNT',
@@ -223,7 +217,7 @@ class AddDocumentFirmaController extends Controller {
                     '_attributes' => [
                         'version' => '1.0',
                         'fecha_creacion' => $dateFormat,
-                        'no_oficio' => 'ICATECH/0001/2021',
+                        'no_oficio' => $nameFile,
                         'dependencia_origen' => 'INSTITUTO DE CAPACITACION Y VINCULACION TECNOLOGICA DEL ESTADO DE CHIAPAS',
                         'asunto_docto' => $request->tipo_documento,
                         'tipo_docto' => Auth::user()->tipo_usuario == 1 ? 'ACS' : 'CNT',
@@ -239,13 +233,16 @@ class AddDocumentFirmaController extends Controller {
 
                 if ($response->json()['cadenaOriginal'] != null) {
                     $urlFile = $this->uploadFileServer($request->file('doc'), $nameFile);
+                    $datas = explode('*',$urlFile);
 
                     $dataInsert = new DocumentosFirmar();
                     $dataInsert->obj_documento = json_encode($ArrayXml);
                     $dataInsert->obj_documento_interno = json_encode($ArrayXml2);
                     $dataInsert->status = 'EnFirma';
-                    $dataInsert->link_pdf = $urlFile;
+                    $dataInsert->link_pdf = $datas[0];
                     $dataInsert->cadena_original = $response->json()['cadenaOriginal'];
+                    $dataInsert->numero_o_clave = $request->no_oficio;
+                    $dataInsert->nombre_archivo = $datas[1];
                     $dataInsert->documento = $result;
                     $dataInsert->documento_interno = $result2;
                     $dataInsert->save();
@@ -265,9 +262,10 @@ class AddDocumentFirmaController extends Controller {
     protected function uploadFileServer($file, $name) {
         // $extensionFile = $file->getClientOriginalExtension();
         // $path = '/'.$subPath;
+        $name = trim(date('YmdHis').'_'.$name);
         $file->storeAs('/uploadFiles/DocumentosFirmas/'.Auth::user()->id, $name);
         $url = Storage::url('/uploadFiles/DocumentosFirmas/'.Auth::user()->id.'/'.$name);
-        return $url;
+        return $url.'*'.$name;
     }
 
 }

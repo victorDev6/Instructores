@@ -2,83 +2,42 @@
 
 namespace App\Http\Controllers\firmaElectronica;
 
+
+use setasign\Fpdi\Fpdi;
 use App\DocumentosFirmar;
 use Illuminate\Http\Request;
 use Spatie\ArrayToXml\ArrayToXml;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Http;
 use Vyuldashev\XmlToArray\XmlToArray;
+use Illuminate\Support\Facades\Storage;
 
 class FirmaController extends Controller {
     
     public function index() {
-        $array = [
-            'emisor' => [
-                '_attributes' => [
-                    'nombre_emisor' => 'TEST TEST',
-                    'cargo_emisor' => 'INSTRUCTOR',
-                    'dependencia_emisor' => 'INSTITUTO DE CAPACITACION Y VINCULACION TECNOLOGICA'
-                ],
-            ],
-            /* 'receptores' => [
-                'receptor' => [
-                    ['_attributes' => 
-                        ['nombre_receptor' => 'TEST1 TEST1', 'cargo_receptor' => 'INSTRUCTOR', 'dependencia_receptor' => 'ICATECH']
-                    ],
-                    ['_attributes' => 
-                        ['nombre_receptor' => 'TEST2 TEST2', 'cargo_receptor' => 'DIRECTOR DE LA UNIDAD DE CAPACITACION X', 'dependencia_receptor' => 'ICATECH']
-                    ],
-                ], 
-            ], */
-            'archivo' => [
-                '_attributes' => [
-                    'nombre_archivo' => 'test.pdf',
-                    'checksum_archivo' => 'shfshfhfeurfhufefjrefhkfhekhfkefrkehf'
-                ],
-                'cuerpo' => ['cuerpo archivo cuerpo archivo cuerpo archivo cuerpo archivo cuerpo archivo cuerpo archivo cuerpo archivo']
-            ],
-            'firmantes' => [
-                '_attributes' => [
-                    'num_firmantes' => '2'
-                ],
-                'firmante' => [
-                    ['_attributes' => 
-                        ['curp_firmante' => 'KFHEIFL938HKHK32', 'nombre_firmante' => 'TEST FIRMANTE 1', 'email_firmante' => 'testFirmante1@gmail.com', 'tipo_firmante' => 'FM']
-                    ],
-                    ['_attributes' => 
-                        ['curp_firmante' => 'MCVHCVCJVCJ23GJV', 'nombre_firmante' => 'TEST FIRMANTE 2', 'email_firmante' => 'testFirmante2@gmail.com', 'tipo_firmante' => 'FM']
-                    ],
-                ]
-            ],  
-
-            /* 'Bad guys' => [
-                'Guy' => [
-                    ['name' => 'Sauron', 'weapon' => 'Evil Eye'],
-                    ['name' => 'Darth Vader', 'weapon' => 'Lightsaber'],
-                ],
-            ], */
-        ];
-
         // por firmar : documentos donde su correo aparezca en el nodo firmantes
-        // $email = Auth::user()->email;
-        $email = 'BERNARDOABARCA2@HOTMAIL.COM'; 
+        $email = Auth::user()->email;
         $docsFirmar = DocumentosFirmar::where('status','!=','CANCELADO')
                         ->whereRaw("EXISTS(SELECT TRUE FROM jsonb_array_elements(obj_documento->'firmantes'->'firmante'->0) x 
-                        WHERE x->'_attributes'->>'email_firmante' IN ('".$email."'))")->get();
+                        WHERE x->'_attributes'->>'email_firmante' IN ('".$email."') 
+                        AND x->'_attributes'->>'firma_firmante' is null)")->get();
+
         $docsFirmados = DocumentosFirmar::where('status','!=','CANCELADO')
+                        ->where('status', 'EnFirma')
                         ->whereRaw("EXISTS(SELECT TRUE FROM jsonb_array_elements(obj_documento->'firmantes'->'firmante'->0) x 
                         WHERE x->'_attributes'->>'email_firmante' IN ('".$email."') 
                         AND x->'_attributes'->>'firma_firmante' <> '')")->get();
+
         $docsValidados = DocumentosFirmar::where('status', '=', 'VALIDADO')
                         ->whereRaw("EXISTS(SELECT TRUE FROM jsonb_array_elements(obj_documento->'firmantes'->'firmante'->0) x 
                         WHERE x->'_attributes'->>'email_firmante' IN ('".$email."'))")->get();
-
+        
         foreach ($docsFirmar as $value) {
             $value->base64xml = base64_encode($value->documento);
         }
         
-        // dd($docsFirmar);
         return view('layouts.firmaElectronica.firmaElectronica', compact('docsFirmar', 'email', 'docsFirmados', 'docsValidados'));
     }
 
@@ -144,6 +103,105 @@ class FirmaController extends Controller {
             ]);
 
         return redirect()->route('firma.inicio')->with('warning', 'Documento firmado exitosamente!');
+    }
+
+    public function sellar(Request $request) {
+        $documento = DocumentosFirmar::where('id', $request->txtIdFirmado)->first();
+
+        // dd($documento);
+        $xmlBase64 = base64_encode($documento->documento);
+        $response = Http::post('https://interopera.chiapas.gob.mx/FirmadoElectronicoDocumentos/SellarXML', [
+            'xml_Final' => $xmlBase64
+        ]);
+
+        // dd($response->json());
+
+        if ($response->json()['status'] == 1) { //exitoso
+            $decode = base64_decode($response->json()['xml']);
+            DocumentosFirmar::where('id', $request->txtIdFirmado)
+                ->update([
+                    'status' => 'VALIDADO',
+                    'uuid_sellado' => $response->json()['uuid'],
+                    'fecha_sellado' => $response->json()['fecha_Sellado'],
+                    'documento' => $decode
+                ]);
+            return redirect()->route('firma.inicio')->with('warning', 'Documento validado exitosamente!');
+        } else {
+            return redirect()->route('firma.inicio')->with('danger', 'Ocurrio un error al sellar el documento, por favor intente de nuevo');
+        }
+    }
+
+    public function generarPDF(Request $request) {
+        $documento = DocumentosFirmar::where('id', $request->txtIdGenerar)->first();
+        // dd($documento->link_pdf);
+        $objeto = json_decode($documento->obj_documento,true);
+        // dd($objeto['firmantes']['firmante'][0]);
+
+        $path = storage_path('app/public/uploadFiles/DocumentosFirmas/'.Auth::user()->id.'/'.$documento->nombre_archivo);
+        $result = str_replace('\\','/', $path);
+
+        $pdf = new Fpdi();
+        // $pdf->addPage('L','Letter');
+        $pageCount =  $pdf->setSourceFile($result);
+        
+        for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) { 
+            $tplId = $pdf->importPage($pageNo);
+            $pdf->addPage('L','Letter'); //
+            $pdf->useTemplate($tplId);
+        }
+
+        // $pdf->setSourceFile('C:/xampp/htdocs/instructores/storage/app/public/uploadFiles/DocumentosFirmas/4/LISTA_ASISTENCIA_8E-21-OFIM-CAE-0003.PDF');
+        // $tplId = $pdf->importPage(1);
+        // $pdf->useTemplate($tplId);
+        $pdf->addPage('L','Letter');
+        
+        // The new content
+        $fontSize = '15';
+        $fontColor = `255,0,0`;
+        $left = 16;
+        $top = 30;
+        $text = 'Documento';
+
+        $pdf->SetFont("helvetica", "B", 10);
+        // $pdf->SetTextColor($fontColor);
+        $pdf->Text($left,$top,$text);
+        $pdf->Text(16, 60, 'Firmas e informacion identificadora');
+        
+        $pdf->SetFont("helvetica", '', 7);
+        // documento
+        $pdf->SetTextColor(98,98,98);
+        $pdf->Text(20, 35, 'Nombre del documento:');
+        $pdf->Text(20, 40, 'Fecha de constancia:');
+        $pdf->Text(20, 45, 'Documento creado por:');
+        $pdf->Text(20, 50, 'Numero de paginas:');
+        
+        $pdf->SetTextColor($fontColor);
+        $pdf->Text(80, 35, $objeto['archivo']['_attributes']['nombre_archivo']);
+        $pdf->Text(80, 40, $documento->fecha_sellado);
+        $pdf->Text(80, 45, $objeto['emisor']['_attributes']['nombre_emisor']);
+        $pdf->Text(80, 50, $pageCount);
+
+        // firmas
+        $pdf->Text(77, 60, '(Las firmas son unicas para este documento)');
+        foreach ($objeto['firmantes']['firmante'][0] as $value) {
+            $pdf->SetTextColor(98,98,98);
+            $pdf->Text(20, 65, 'Nombre del Firmante:');
+            $pdf->Text(20, 70, 'CURP:');
+            $pdf->Text(20, 75, 'Numero de Certificado:');
+            $pdf->Text(20, 80, 'Emisor:');
+            $pdf->Text(20, 85, 'Firma Electronica:');
+            $pdf->Text(20, 98, 'Fecha y hora de Firma:');
+
+            $pdf->SetTextColor($fontColor);
+            $pdf->Text(80, 65, $value['_attributes']['nombre_firmante']);
+            $pdf->Text(80, 70, $value['_attributes']['curp_firmante']);
+            $pdf->Text(80, 75, $value['_attributes']['no_serie_firmante']);
+            $pdf->Text(80, 80, 'SERVICIO DE ADMINISTRACION TRIBUTARIA');
+            $pdf->setXY(79, 82);
+            $pdf->MultiCell(0, 4, $value['_attributes']['firma_firmante'], 0, 'J', false);
+            $pdf->Text(80, 98, $value['_attributes']['fecha_firmado_firmante']);
+        }
+        $pdf->Output('I', $objeto['archivo']['_attributes']['nombre_archivo']);
     }
 
 }

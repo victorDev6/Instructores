@@ -58,7 +58,7 @@
                                 <label class="custom-file-label" for="doc">Seleccionar Archivo</label>
                             </div>
                         </div>
-                        <div class="row my-5">
+                        <div class="row py-3">
                             <div class="col">
                                 <div class="custom-control custom-switch">
                                     <input type="checkbox" class="custom-control-input" id="firmare" name="firmare">
@@ -75,7 +75,13 @@
                             </div>
                         </div>
 
-                        <div class="col text-center pb-3"><strong>Añadir Firmantes</strong></div>
+                        <div class="row mt-3">
+                            <div class="col">
+                                <input type="text" id="no_oficio" name="no_oficio" class="form-control" placeholder="N° de oficio o clave de curso">
+                            </div>
+                        </div>
+
+                        <div class="col text-center pt-2 pb-3"><strong>Añadir Firmantes</strong></div>
                         <div class="row">
                             <div class="col-12 col-md-6">
                                 <select class="custom-select" id="tipoUser" name="tipoUser">
@@ -150,107 +156,113 @@
 @endsection
 
 @section('js')
-<script>
-    $('input[type="file"]').change(function(e) {
-        var fileName = e.target.files[0].name;
-        $('.custom-file-label').html(fileName);
-    });
+    <script>
+        $('input[type="file"]').change(function(e) {
+            var fileName = e.target.files[0].name;
+            $('.custom-file-label').html(fileName);
+        });
 
-    $('#btnSearch').click(function() {
-        tipoUser = $('#tipoUser').val();
-        email = $('#email').val();
-        if (tipoUser != '' && email != '') {
-            objFirmante = recolectarDatos('POST', tipoUser, email);
-            enviarInformacion(objFirmante);
-        } else {
-            $('#titulo').html('Buscar Firmante');
-            $('#mensaje').html(
-                'Debe seleccionar un tipo de usuario e ingresar un correo electronico antes de buscar a un firmante'
-            );
-            $('#modalMessages').modal('show');
+        $('#btnSearch').click(function() {
+            tipoUser = $('#tipoUser').val();
+            email = $('#email').val();
+            if (tipoUser != '' && email != '') {
+                objFirmante = recolectarDatos('POST', tipoUser, email);
+                enviarInformacion(objFirmante);
+            } else {
+                $('#titulo').html('Buscar Firmante');
+                $('#mensaje').html(
+                    'Debe seleccionar un tipo de usuario e ingresar un correo electronico antes de buscar a un firmante'
+                );
+                $('#modalMessages').modal('show');
+            }
+        });
+
+        function recolectarDatos(method, tipoUser, email) {
+            newFirmante = {
+                tipo: tipoUser,
+                email: email,
+                '_token': $("meta[name='csrf-token']").attr("content"),
+                '_method': method
+            };
+            return newFirmante;
         }
-    });
 
-    function recolectarDatos(method, tipoUser, email) {
-        newFirmante = {
-            tipo: tipoUser,
-            email: email,
-            '_token': $("meta[name='csrf-token']").attr("content"),
-            '_method': method
-        };
-        return newFirmante;
-    }
-
-    function enviarInformacion(objFirmante) {
-        $.ajax({
-            type: 'POST',
-            url: "{{ url('/AddDocumentfirma/buscar') }}",
-            data: objFirmante,
-            beforeSend: function() {
-                console.log('init');
-                // $('#loader').modal('show');
-                $('#loader').modal('toggle')
-            },
-            success: function(result) {
+        function enviarInformacion(objFirmante) {
+            $.ajax({
+                type: 'POST',
+                url: "{{ url('/AddDocumentfirma/buscar') }}",
+                data: objFirmante,
+                beforeSend: function() {
+                    console.log('init');
+                    // $('#loader').modal('show');
+                    $('#loader').modal('toggle')
+                },
+                success: function(result) {
+                    // $('#loader').modal('hide');
+                    $('#loader').modal('toggle')
+                    if (result['id'] == null) {
+                        sujeto = objFirmante['tipo'] == 1 ? 'el instructor' : 'el funcionario';
+                        $('#titulo').html('Buscar Firmante');
+                        $('#mensaje').html(
+                            'No se encontraron coincidencias! Esto podria suceder por que el correo no esta escrito correctamente o porque ' +
+                            sujeto + ' no se encuentra activo.');
+                        $('#modalMessages').modal('show');
+                    } else {
+                        crearInputData(objFirmante['tipo'], result);
+                    }
+                },
+                error: function(jqXHR, textStatus) {
+                    // $('#loader').modal('hide');
+                    $('#loader').modal('toggle')
+                    console.log(jqXHR);
+                    alert("Hubo un error: " + jqXHR.status);
+                }
+            }).done(function() {
                 // $('#loader').modal('hide');
                 $('#loader').modal('toggle')
-                if (result['id'] == null) {
-                    sujeto = objFirmante['tipo'] == 1 ? 'el instructor' : 'el funcionario';
-                    $('#titulo').html('Buscar Firmante');
-                    $('#mensaje').html(
-                        'No se encontraron coincidencias! Esto podria suceder por que el correo no esta escrito correctamente o porque ' +
-                        sujeto + ' no se encuentra activo.');
-                    $('#modalMessages').modal('show');
-                } else {
-                    crearInputData(objFirmante['tipo'], result);
+            });
+        }
+
+        function crearInputData(tipo, result) {
+            tipo = tipo == 1 ? 'Instructor' : 'Funcionario';
+            firmantes = document.getElementById('firmantes');
+            firmantes.innerHTML += `
+                    <div class="col-12">
+                        <div class="alert alert-info" role="alert my-0 py-0">${result['nombre']} ${result['apellidoPaterno']} ${result['apellidoMaterno']}</div>
+                        <input type="text" class="d-none" name="firmas[]" value="${tipo}-${result['id']}" input">
+                    </div>
+                `;
+        }
+
+        $('#form').validate({
+            rules: {
+                doc: {
+                    required: true
+                },
+                tipo_documento: {
+                    required: true
+                },
+                no_oficio: {
+                    required: true
                 }
             },
-            error: function(jqXHR, textStatus) {
-                // $('#loader').modal('hide');
-                $('#loader').modal('toggle')
-                console.log(jqXHR);
-                alert("Hubo un error: " + jqXHR.status);
+            messages: {
+                doc: {
+                    required: 'El documento a firmar es requerido'
+                },
+                tipo_documento: {
+                    required: 'Campo requerido'
+                },
+                no_oficio: {
+                    required: 'El número de oficio o clave de curso es requerido'
+                }
             }
-        }).done(function() {
-            // $('#loader').modal('hide');
-            $('#loader').modal('toggle')
         });
-    }
 
-    function crearInputData(tipo, result) {
-        tipo = tipo == 1 ? 'Instructor' : 'Funcionario';
-        firmantes = document.getElementById('firmantes');
-        firmantes.innerHTML += `
-                <div class="col-12">
-                    <div class="alert alert-info" role="alert my-0 py-0">${result['nombre']} ${result['apellidoPaterno']} ${result['apellidoMaterno']}</div>
-                    <input type="text" class="d-none" name="firmas[]" value="${tipo}-${result['id']}" input">
-                </div>
-            `;
-    }
-
-    $('#form').validate({
-        rules: {
-            doc: {
-                required: true
-            },
-            tipo_documento: {
-                required: true
+        $('#btnSolicitar').click(function() {
+            if (confirm("¿Está seguro de enviar a firma este documento?") == true) {
+                $('#form').submit();
             }
-        },
-        messages: {
-            doc: {
-                required: 'El documento a firmar es requerido'
-            },
-            tipo_documento: {
-                required: 'Campo requerido'
-            }
-        }
-    });
-
-    $('#btnSolicitar').click(function() {
-        if (confirm("¿Está seguro de enviar a firma este documento?") == true) {
-            $('#form').submit();
-        }
-    });
-</script>
+        });
+    </script>
 @endsection

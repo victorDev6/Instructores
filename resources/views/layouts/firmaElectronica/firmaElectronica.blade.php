@@ -26,6 +26,12 @@
                         <p>{{ $message }}</p>
                     </div>
                 @endif
+
+                @if ($message = Session::get('danger'))
+                    <div class="alert alert-danger">
+                        <p>{{ $message }}</p>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -57,7 +63,8 @@
                                                     <th scope="col">Ver documento</th>
                                                     <th scope="col">Firmantes</th>
                                                     <th scope="col">Creado</th>
-                                                    <th scope="col">Firmar</th>                                             </tr>
+                                                    <th scope="col">Firmar</th>                                           
+                                                </tr>
                                             </thead>
     
                                             <tbody>
@@ -109,17 +116,62 @@
                             {{-- Firmados --}}
                             <div class="tab-pane fade" id="nav-firmados" role="tabpanel" aria-labelledby="nav-home-tab">
                                 @if ($docsFirmados != "[]")
-                                    <table class="table table-bordered table-striped">
-                                        <thead>
-                                            <tr>
-                                                <th scope="col">Firmados</th>
-                                            </tr>
-                                        </thead>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col">Nombre del documento</th>
+                                                    <th scope="col">Ver documento</th>
+                                                    <th scope="col">Firmantes</th>
+                                                    <th scope="col">Creado</th>
+                                                    <th scope="col">Validar</th>                                        
+                                                </tr>
+                                            </thead>
+    
+                                            <tbody>
+                                                @foreach ($docsFirmados as $docFirmado)
+                                                    @php
+                                                        $sendValidation = true;
+                                                        $firmantes = '';
+                                                        $nameArchivo = '';
+                                                        $obj = json_decode($docFirmado->obj_documento, true);
+                                                        $obj2 = json_decode($docFirmado->obj_documento_interno, true);
+                                                        $nameArchivo = $obj['archivo']['_attributes']['nombre_archivo'];
 
-                                        <tbody>
-                                            <td>'jh</td>
-                                        </tbody>
-                                    </table>
+                                                        foreach ($obj['firmantes']['firmante'][0] as $value) {
+                                                            $firmantes = $firmantes.$value['_attributes']['nombre_firmante'].', ';
+                                                            if($value['_attributes']['firma_firmante'] == null){
+                                                                $sendValidation = false;
+                                                            }
+                                                        }
+                                                        $firmantes = substr($firmantes, 0, -2);
+                                                    @endphp
+
+                                                    <tr>
+                                                        <td><small>{{$nameArchivo}}</small></td>
+                                                        <td>
+                                                            <a href="{{ $docFirmado->link_pdf }}" target="_blank" rel="{{ $docFirmado->link_pdf }}">
+                                                                <img class="rounded" src="{{ asset('img/pdf.png') }}" alt="{{ asset('img/pdf.png') }}" width="30px" height="30px">
+                                                            </a>
+                                                        </td>
+                                                        <td><small>{{$firmantes}}</small></td>
+                                                        <td><small>{{$docFirmado->created_at->format('d-m-Y')}}</small></td>
+                                                        <td>
+                                                            @if ($obj2['emisor']['_attributes']['email'] == $email)
+                                                                @if ($sendValidation)
+                                                                    <button type="button" onclick="validardocumento('{{$docFirmado->id}}')" class="btn btn-outline-primary">Validar</button>
+                                                                @else
+                                                                    Faltan Firmas
+                                                                @endif
+                                                            @else
+                                                                No disponible
+                                                            @endif
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 @else
                                     <div class="row mt-3">
                                         <div class="col d-flex justify-content-center">
@@ -132,17 +184,44 @@
                             {{-- Validados --}}
                             <div class="tab-pane fade" id="nav-validados" role="tabpanel" aria-labelledby="nav-home-tab">
                                 @if ($docsValidados != "[]")
-                                    <table class="table table-bordered table-striped">
-                                        <thead>
-                                            <tr>
-                                                <th scope="col">validados</th>
-                                            </tr>
-                                        </thead>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col">Nombre del documento</th>
+                                                    <th scope="col">Firmantes</th>
+                                                    <th scope="col">Creado</th>
+                                                    <th scope="col">Validado</th>
+                                                    <th scope="col">Descargar</th>                                        
+                                                </tr>
+                                            </thead>
+    
+                                            <tbody>
+                                                @foreach ($docsValidados as $docValidado)
+                                                @php
+                                                    $firmantes = '';
+                                                    $nameArchivo = '';
+                                                    $obj = json_decode($docValidado->obj_documento, true);
+                                                    $nameArchivo = $obj['archivo']['_attributes']['nombre_archivo'];
 
-                                        <tbody>
-                                            <td>'jh</td>
-                                        </tbody>
-                                    </table>
+                                                    foreach ($obj['firmantes']['firmante'][0] as $value) {
+                                                        $firmantes = $firmantes.$value['_attributes']['nombre_firmante'].', ';
+                                                    }
+                                                    $firmantes = substr($firmantes, 0, -2);
+                                                @endphp
+                                                    <tr>
+                                                        <td><small>{{$nameArchivo}}</small></td>
+                                                        <td><small>{{$firmantes}}</small></td>
+                                                        <td><small>{{$docValidado->created_at->format('d-m-Y')}}</small></td>
+                                                        <td><small>{{$docValidado->fecha_sellado}}</small></td>
+                                                        <td>
+                                                            <button type="button" onclick="descargarDocumento('{{$docValidado->id}}')" class="btn btn-outline-success">Descargar</button>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 @else
                                     <div class="row mt-3">
                                         <div class="col d-flex justify-content-center">
@@ -163,6 +242,16 @@
                 <input class="d-none" id="curp" name="curp" type="text">
                 <input class="d-none" id="idFile" name="idFile" type="text">
             </form>
+
+            <form id="formSellar" action="{{route('firma.sellar')}}" method="post">
+                @csrf
+                <input class="d-none" id="txtIdFirmado" name="txtIdFirmado" type="text">
+            </form>
+
+            <form id="formGenerarPDF" action="{{route('firma.generarPdf')}}" method="post">
+                @csrf
+                <input class="d-none" id="txtIdGenerar" name="txtIdGenerar" type="text">
+            </form>
         </div>
     </div>
     
@@ -173,8 +262,6 @@
     <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/plugins/jquery-3.4.1/jquery-3.4.1.min.js"></script>
     <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/plugins/bootstrap-4.3.1/js/bootstrap.min.js"></script>
     <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/plugins/jasny-bootstrap4/js/jasny-bootstrap.min.js"></script>
-
-    
 
     {{-- js para poder firmar --}}
     <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/sjcl.js"></script>
@@ -238,10 +325,6 @@
         }
 
         function firmar() {
-            // console.log(cadena);
-            // console.log(xmlBase64);
-            // console.log(curp);
-
             var vresponseSignature = sign(
                 cadena,
                 xmlBase64,
@@ -250,23 +333,9 @@
                 39,
                 'dwLChYOVylB9htqD9qIaSVHddKzWKiqXqmh7fFRHwFJk2x'
             );
-
             console.log(vresponseSignature);
 
             if (vresponseSignature.statusResponse) {
-                /* $('#txtsignedCurp').val(vresponseSignature.curp);
-                $('#txtcode').val(vresponseSignature.codeResponse);
-                $('#txtdescription').val(vresponseSignature.descriptionResponse);
-                $('#txtserie').val(vresponseSignature.certifiedSeries);
-                $('#txtsecuencie').val(vresponseSignature.sequenceResponse);
-                $('#txtsignedDate').val(vresponseSignature.signedDateResponse);
-                $('#txtsignature').val(vresponseSignature.signature);
-                $('#txtsubject').val(vresponseSignature.certifiedSubject); */
-
-                console.log(vresponseSignature.date);
-                console.log(vresponseSignature.certifiedSeries);
-                console.log(vresponseSignature.sign);
-
                 $('#fechaFirmado').val(vresponseSignature.date);
                 $('#serieFirmante').val(vresponseSignature.certifiedSeries)
                 $('#firma').val(vresponseSignature.sign);
@@ -278,6 +347,16 @@
                 $('#txtcode').val(vresponseSignature.codeResponse);
                 $('#txtdescription').val(vresponseSignature.descriptionResponse);
             }
+        }
+
+        function validardocumento(id) {
+            $('#txtIdFirmado').val(id);
+            $('#formSellar').submit();
+        }
+
+        function descargarDocumento(id) {
+            $('#txtIdGenerar').val(id);
+            $('#formGenerarPDF').submit();
         }
 
     </script>
