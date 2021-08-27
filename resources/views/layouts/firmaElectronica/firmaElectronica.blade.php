@@ -140,7 +140,7 @@
 
                                                         foreach ($obj['firmantes']['firmante'][0] as $value) {
                                                             $firmantes = $firmantes.$value['_attributes']['nombre_firmante'].', ';
-                                                            if($value['_attributes']['firma_firmante'] == null){
+                                                            if(empty($value['_attributes']['firma_firmante'])){
                                                                 $sendValidation = false;
                                                             }
                                                         }
@@ -346,6 +346,12 @@
             } else {
                 $('#txtcode').val(vresponseSignature.codeResponse);
                 $('#txtdescription').val(vresponseSignature.descriptionResponse);
+                var result = confirm(vresponseSignature.messageResponse);
+                if (result) {
+                    location.reload();
+                } else {
+                    location.reload();
+                }
             }
         }
 

@@ -20,12 +20,14 @@
         "laravel/ui": "2.4",
         "laravelcollective/html": "^6.0",
         "nesbot/carbon": "^2.51",
+        "setasign/fpdf": "1.8.*",
+        "setasign/fpdi": "^2.0",
+        "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/array-to-xml": "^2.15",
         "spatie/laravel-permission": "^4.2",
         "spatie/pdf-to-text": "^1.4",
         "vyuldashev/xml-to-array": "^1.0",
-        "setasign/fpdf": "1.8.*",
-        "setasign/fpdi": "^2.0"
+        "aferrandini/phpqrcode": "1.0.1"
     },
     "require-dev": {
         "facade/ignition": "^2.0",

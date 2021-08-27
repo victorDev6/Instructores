@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\firmaElectronica;
 
 
+// use QrCode;
 use setasign\Fpdi\Fpdi;
 use App\DocumentosFirmar;
 use Illuminate\Http\Request;
@@ -10,9 +11,11 @@ use Spatie\ArrayToXml\ArrayToXml;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
+// use BaconQrCode\Encoder\QrCode;
 use Illuminate\Support\Facades\Http;
 use Vyuldashev\XmlToArray\XmlToArray;
 use Illuminate\Support\Facades\Storage;
+// use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class FirmaController extends Controller {
     
@@ -134,11 +137,12 @@ class FirmaController extends Controller {
     public function generarPDF(Request $request) {
         $documento = DocumentosFirmar::where('id', $request->txtIdGenerar)->first();
         // dd($documento->link_pdf);
-        $objeto = json_decode($documento->obj_documento,true);
+        $objeto = json_decode($documento->obj_documento_interno,true);
         // dd($objeto['firmantes']['firmante'][0]);
 
         $path = storage_path('app/public/uploadFiles/DocumentosFirmas/'.Auth::user()->id.'/'.$documento->nombre_archivo);
         $result = str_replace('\\','/', $path);
+
 
         $pdf = new Fpdi();
         // $pdf->addPage('L','Letter');
@@ -186,21 +190,37 @@ class FirmaController extends Controller {
         foreach ($objeto['firmantes']['firmante'][0] as $value) {
             $pdf->SetTextColor(98,98,98);
             $pdf->Text(20, 65, 'Nombre del Firmante:');
-            $pdf->Text(20, 70, 'CURP:');
-            $pdf->Text(20, 75, 'Numero de Certificado:');
-            $pdf->Text(20, 80, 'Emisor:');
-            $pdf->Text(20, 85, 'Firma Electronica:');
-            $pdf->Text(20, 98, 'Fecha y hora de Firma:');
+            // $pdf->Text(20, 70, 'CURP:');
+            $pdf->Text(20, 70, 'Numero de Certificado:');
+            $pdf->Text(20, 75, 'Emisor:');
+            $pdf->Text(20, 80, 'Firma Electronica:');
+            $pdf->Text(20, 93, 'Fecha y hora de Firma:');
+            $pdf->Text(20, 98, 'Puesto: ');
 
             $pdf->SetTextColor($fontColor);
             $pdf->Text(80, 65, $value['_attributes']['nombre_firmante']);
-            $pdf->Text(80, 70, $value['_attributes']['curp_firmante']);
-            $pdf->Text(80, 75, $value['_attributes']['no_serie_firmante']);
-            $pdf->Text(80, 80, 'SERVICIO DE ADMINISTRACION TRIBUTARIA');
-            $pdf->setXY(79, 82);
+            // $pdf->Text(80, 70, $value['_attributes']['curp_firmante']);
+            $pdf->Text(80, 70, $value['_attributes']['no_serie_firmante']);
+            $pdf->Text(80, 75, 'SERVICIO DE ADMINISTRACION TRIBUTARIA');
+            $pdf->setXY(79, 77);
             $pdf->MultiCell(0, 4, $value['_attributes']['firma_firmante'], 0, 'J', false);
-            $pdf->Text(80, 98, $value['_attributes']['fecha_firmado_firmante']);
+            $pdf->Text(80, 93, $value['_attributes']['fecha_firmado_firmante']);
+            $pdf->Text(80, 98, $value['_attributes']['puesto_firmante']);
         }
+        // $pdf->Image($image,10,10,-300);
+        $locat = storage_path('app/public/qrcode/qrcode.png');
+        $location = str_replace('\\','/', $locat);
+        // QRcode::png("coded number here", $location);
+        \PHPQRCode\QRcode::png("Test", $location, 'L', 10, 0);
+
+
+        // $pdf->Image("test.png", 40, 10, 20, 20, "png");
+        $pdf->Image($location, 16, 185, 20, 20, "png");
+        
+        $pdf->Text(45, 190, 'Para verificar la integridad de este documento, favor de escanear el codigo QR o visitar el enlace:');
+        $pdf->Text(45, 195, 'https://ejemplo.chiapas.gob.mx');
+
+
         $pdf->Output('I', $objeto['archivo']['_attributes']['nombre_archivo']);
     }
 
