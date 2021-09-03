@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Instructores'),
+    'name' => env('APP_NAME2', 'Instructores | ICATECH'),
 
     /*
     |--------------------------------------------------------------------------

@@ -70,8 +70,7 @@ class CalificacionesController extends Controller {
     }
 
     public function calificaciones(Request $request) {
-        $clave = $request->get('clave');
-        $file = "CALIFICACIONES_$clave.PDF";
+        $clave = $request->get('clavePDF');
         if($clave) {
             $curso = DB::connection('pgsql')->table('tbl_cursos')->select(
                 'tbl_cursos.*',
@@ -99,9 +98,10 @@ class CalificacionesController extends Controller {
                     exit;
                 }               
                 $consec = 1;
-                $pdf = PDF::loadView('layouts.calificaciones.pdfCalificaciones',compact('curso','alumnos','consec'));        
+                $pdf = PDF::loadView('layouts.calificaciones.pdfCalificaciones', compact('curso','alumnos','consec'));        
                 $pdf->setPaper('Letter', 'landscape');
-                return $pdf->stream($file);  
+                $file = "CALIFICACIONES_$clave.PDF";
+                return $pdf->download($file);
             } else return "Curso no v&aacute;lido para esta Unidad";
         }
         return "Clave no v&aacute;lida";

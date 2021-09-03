@@ -161,6 +161,7 @@
             </tbody>
         </table>
     </footer>
+    
     <main>
         <table class="tabla">
             <thead>

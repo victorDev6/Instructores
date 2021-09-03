@@ -117,7 +117,12 @@
                 @endif
             </div>
         </div>
-        {!! Form::close() !!} 
+        {!! Form::close() !!}
+        
+        <form id="formPDF" action="{{route('calificaciones.pdf')}}" method="post" target="_blanck">
+            @csrf
+            <input id="clavePDF" name="clavePDF" class="d-none" type="text" value="{{$clave}}">
+        </form>
     </div>
 
 @endsection
@@ -139,10 +144,11 @@
 
             $('#reporte').click(function () {
                 if(confirm("¿Está seguro de generar el reporte de calificaciones?")==true){
-                    $('#frm').attr('action', "{{route('calificaciones.pdf')}}");
-                    $('#frm').attr('method', "post"); 
-                    $('#frm').attr('target', "_blanck"); 
-                    $('#frm').submit(); 
+                    // $('#frm').attr('action', "{{route('calificaciones.pdf')}}");
+                    // $('#frm').attr('method', "post"); 
+                    // $('#frm').attr('target', "_blanck"); 
+                    // $('#frm').submit(); 
+                    $('#formPDF').submit(); 
                 }
             });
         });       

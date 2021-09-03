@@ -15,8 +15,7 @@
 @endsection
 
 @section('content')
-
-    <div id="vHTMLSignature"></div>
+    <div class="d-none" id="vHTMLSignature"></div>
 
     <div class="container-fluid pt-3 px-0 py-0 mx-0 my-0">
         <div class="row">
@@ -38,6 +37,7 @@
         <div class="card">
             <div class="card-header">Mis documentos</div>
             <div class="card-body px-0">
+                
                 <div class="row">
                     <div class="col">
                         {{-- encabezado --}}
@@ -48,7 +48,6 @@
                                 <a class="nav-item nav-link" id="nav-validados-tab" data-toggle="tab" href="#nav-validados" role="tab" aria-controls="nav-validados" aria-selected="false">Validados</a>
                                 </div>
                         </nav>
-
                         
                         {{-- contenido --}}
                         <div class="tab-content py-3 px-sm-0" id="nav-tabContent">
@@ -76,9 +75,15 @@
                                                         $nameArchivo = $obj['archivo']['_attributes']['nombre_archivo'];
 
                                                         foreach ($obj['firmantes']['firmante'][0] as $value) {
-                                                            $firmantes = $firmantes.$value['_attributes']['nombre_firmante'].', ';
+                                                            // $firmantes = $firmantes.$value['_attributes']['nombre_firmante'].'(), ';
                                                             if($value['_attributes']['email_firmante'] == $email){
                                                                 $curp = $value['_attributes']['curp_firmante'];
+                                                            }
+
+                                                            if(empty($value['_attributes']['firma_firmante'])){
+                                                                $firmantes = $firmantes.$value['_attributes']['nombre_firmante'].' (NO), ';
+                                                            } else {
+                                                                $firmantes = $firmantes.$value['_attributes']['nombre_firmante'].' (SI), ';
                                                             }
                                                         }
                                                         $firmantes = substr($firmantes, 0, -2);
@@ -139,9 +144,11 @@
                                                         $nameArchivo = $obj['archivo']['_attributes']['nombre_archivo'];
 
                                                         foreach ($obj['firmantes']['firmante'][0] as $value) {
-                                                            $firmantes = $firmantes.$value['_attributes']['nombre_firmante'].', ';
                                                             if(empty($value['_attributes']['firma_firmante'])){
                                                                 $sendValidation = false;
+                                                                $firmantes = $firmantes.$value['_attributes']['nombre_firmante'].' (NO), ';
+                                                            } else {
+                                                                $firmantes = $firmantes.$value['_attributes']['nombre_firmante'].' (SI), ';
                                                             }
                                                         }
                                                         $firmantes = substr($firmantes, 0, -2);
@@ -318,6 +325,7 @@
         });
 
         function abriModal(key) {
+            $('#vHTMLSignature').removeClass('d-none');
             cadena = $('#cadena'+ key).val();
             xmlBase64 = $('#xml'+ key).val();
             curp = $('#curp'+ key).val();

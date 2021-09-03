@@ -22,6 +22,7 @@ class CreateDocumentosFirmarTable extends Migration
             $table->string('status');
             $table->string('link_pdf');
             $table->text('cadena_original');
+            $table->text('tipo_archivo');
             $table->string('uuid_sellado')->nullable();
             $table->string('fecha_sellado')->nullable();
             $table->string('numero_o_clave')->nullable();

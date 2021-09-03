@@ -19,23 +19,31 @@ use Illuminate\Support\Facades\Storage;
 
 class FirmaController extends Controller {
     
+    // php artisan serve --port=8001
     public function index() {
         // por firmar : documentos donde su correo aparezca en el nodo firmantes
         $email = Auth::user()->email;
         $docsFirmar = DocumentosFirmar::where('status','!=','CANCELADO')
                         ->whereRaw("EXISTS(SELECT TRUE FROM jsonb_array_elements(obj_documento->'firmantes'->'firmante'->0) x 
                         WHERE x->'_attributes'->>'email_firmante' IN ('".$email."') 
-                        AND x->'_attributes'->>'firma_firmante' is null)")->get();
+                        AND x->'_attributes'->>'firma_firmante' is null)")->orderBy('id', 'desc')->get();
 
-        $docsFirmados = DocumentosFirmar::where('status','!=','CANCELADO')
-                        ->where('status', 'EnFirma')
+        $docsFirmados = DocumentosFirmar::where('status', 'EnFirma')
                         ->whereRaw("EXISTS(SELECT TRUE FROM jsonb_array_elements(obj_documento->'firmantes'->'firmante'->0) x 
                         WHERE x->'_attributes'->>'email_firmante' IN ('".$email."') 
-                        AND x->'_attributes'->>'firma_firmante' <> '')")->get();
+                        AND x->'_attributes'->>'firma_firmante' <> '')")
+                        ->orWhere(function($query) use ($email) {
+                            $query->where('obj_documento_interno->emisor->_attributes->email', $email)
+                                    ->where('status', 'EnFirma');
+                        })->orderBy('id', 'desc')->get();
 
-        $docsValidados = DocumentosFirmar::where('status', '=', 'VALIDADO')
+        $docsValidados = DocumentosFirmar::where('status', 'VALIDADO')
                         ->whereRaw("EXISTS(SELECT TRUE FROM jsonb_array_elements(obj_documento->'firmantes'->'firmante'->0) x 
-                        WHERE x->'_attributes'->>'email_firmante' IN ('".$email."'))")->get();
+                        WHERE x->'_attributes'->>'email_firmante' IN ('".$email."'))")
+                        ->orWhere(function($query) use ($email) {
+                            $query->where('obj_documento_interno->emisor->_attributes->email', $email)
+                                    ->where('status', 'VALIDADO');
+                        })->orderBy('id', 'desc')->get();
         
         foreach ($docsFirmar as $value) {
             $value->base64xml = base64_encode($value->documento);
@@ -136,12 +144,31 @@ class FirmaController extends Controller {
 
     public function generarPDF(Request $request) {
         $documento = DocumentosFirmar::where('id', $request->txtIdGenerar)->first();
-        // dd($documento->link_pdf);
         $objeto = json_decode($documento->obj_documento_interno,true);
-        // dd($objeto['firmantes']['firmante'][0]);
+        $tipo_archivo = $documento->tipo_archivo;
+        $totalFirmantes = $objeto['firmantes']['_attributes']['num_firmantes'];
 
         $path = storage_path('app/public/uploadFiles/DocumentosFirmas/'.Auth::user()->id.'/'.$documento->nombre_archivo);
         $result = str_replace('\\','/', $path);
+
+        $array = [
+            [
+                'nombre_firmante' => 'VICTOR MANUEL ORTIZ RODRIGUEZ',
+                'no_serie_firmante' => '00001000000503277602',
+                'SERVICIO DE ADMINISTRACION TRIBUTARIA',
+                'firma_firmante' => 'AHzFQJ0errrY6yXn+FsQjarYV1Qpg0OTRm/TRmgiGb7Y31odx5cTO1JHGgkfDr+dwEgSOvAehtMoIw+y9KiAzDk8gJOD2uf1EXMHRXq7cbLEbTG7jvL+10XORkiVfO9vQMi6Ii2YTnOEjizyWYitTOxLCfgxET+pEBULdpznIbii/lZnfFbc1uiNaPAOd9ngoF1np16V/aLe9dlFrnymSPMHT0BMAuYjXEumCBE+/fK8fNAp4x7p8mr6DP0/DPPc5us2M7/ZG+7rEP/FveykTNko5ABat8HhbNlDOZ0Px2NXepMEc8LdOcgn7siOAo0snSUCIBGsAxmo5kmWY7WR7Q==',
+                'fecha_firmado_firmante' => '2021-09-01T13:30:00',
+                'puesto_firmante' => 'DIRECTOR DE UNIDAD EJEMPLO'
+            ],
+            [
+                'nombre_firmante' => 'VICTOR MANUEL ORTIZ RODRIGUEZ',
+                'no_serie_firmante' => '00001000000503277602',
+                'SERVICIO DE ADMINISTRACION TRIBUTARIA',
+                'firma_firmante' => 'AHzFQJ0errrY6yXn+FsQjarYV1Qpg0OTRm/TRmgiGb7Y31odx5cTO1JHGgkfDr+dwEgSOvAehtMoIw+y9KiAzDk8gJOD2uf1EXMHRXq7cbLEbTG7jvL+10XORkiVfO9vQMi6Ii2YTnOEjizyWYitTOxLCfgxET+pEBULdpznIbii/lZnfFbc1uiNaPAOd9ngoF1np16V/aLe9dlFrnymSPMHT0BMAuYjXEumCBE+/fK8fNAp4x7p8mr6DP0/DPPc5us2M7/ZG+7rEP/FveykTNko5ABat8HhbNlDOZ0Px2NXepMEc8LdOcgn7siOAo0snSUCIBGsAxmo5kmWY7WR7Q==',
+                'fecha_firmado_firmante' => '2021-09-01T13:30:00',
+                'puesto_firmante' => 'DIRECTOR DE UNIDAD DE CAPACITACION SAN CRISTOBAL DE LAS CASAS'
+            ]
+        ];
 
 
         $pdf = new Fpdi();
@@ -150,20 +177,25 @@ class FirmaController extends Controller {
         
         for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) { 
             $tplId = $pdf->importPage($pageNo);
-            $pdf->addPage('L','Letter'); //
+            if ($tipo_archivo == 'Contrato') {
+                $pdf->addPage('P','A4'); //
+            } else {
+                $pdf->addPage('L','Letter'); //
+            }
             $pdf->useTemplate($tplId);
         }
 
-        // $pdf->setSourceFile('C:/xampp/htdocs/instructores/storage/app/public/uploadFiles/DocumentosFirmas/4/LISTA_ASISTENCIA_8E-21-OFIM-CAE-0003.PDF');
-        // $tplId = $pdf->importPage(1);
-        // $pdf->useTemplate($tplId);
-        $pdf->addPage('L','Letter');
+        if ($tipo_archivo == 'Contrato') {
+            $pdf->addPage('P','A4');
+        } else {
+            $pdf->addPage('L','Letter');
+        }
         
         // The new content
         $fontSize = '15';
         $fontColor = `255,0,0`;
         $left = 16;
-        $top = 30;
+        $top = 20;
         $text = 'Documento';
 
         $pdf->SetFont("helvetica", "B", 10);
@@ -174,53 +206,112 @@ class FirmaController extends Controller {
         $pdf->SetFont("helvetica", '', 7);
         // documento
         $pdf->SetTextColor(98,98,98);
-        $pdf->Text(20, 35, 'Nombre del documento:');
-        $pdf->Text(20, 40, 'Fecha de constancia:');
-        $pdf->Text(20, 45, 'Documento creado por:');
-        $pdf->Text(20, 50, 'Numero de paginas:');
+        $pdf->Text(20, 25, 'Nombre del documento:');
+        $pdf->Text(20, 30, 'Fecha de constancia:');
+        $pdf->Text(20, 35, 'Documento creado por:');
+        $pdf->Text(20, 40, 'Numero de paginas:');
+        $pdf->Text(20, 45, 'Numero de firmantes:');
         
         $pdf->SetTextColor($fontColor);
-        $pdf->Text(80, 35, $objeto['archivo']['_attributes']['nombre_archivo']);
-        $pdf->Text(80, 40, $documento->fecha_sellado);
-        $pdf->Text(80, 45, $objeto['emisor']['_attributes']['nombre_emisor']);
-        $pdf->Text(80, 50, $pageCount);
+        $pdf->Text(80, 25, $objeto['archivo']['_attributes']['nombre_archivo']);
+        $pdf->Text(80, 30, $documento->fecha_sellado);
+        $pdf->Text(80, 35, $objeto['emisor']['_attributes']['nombre_emisor']);
+        $pdf->Text(80, 40, $pageCount);
+        $pdf->Text(80, 45, $totalFirmantes);
 
         // firmas
         $pdf->Text(77, 60, '(Las firmas son unicas para este documento)');
+
+        $x = 20; $y = 65;
+        /* foreach ($array as $value) {
+            $pdf->SetTextColor(98,98,98);
+            $pdf->Text($x, $y, 'Nombre del Firmante:');
+            if ($tipo_archivo == 'Contrato') {
+                $pdf->Text($x + 100, $y, 'Numero de Certificado:');
+                $pdf->Text($x, $y + 5, 'Emisor:');
+                $pdf->Text($x, $y + 10, 'Firma Electronica:');
+                $pdf->Text($x, $y + 27, 'Fecha y hora de Firma:');
+                $pdf->Text($x + 80, $y + 27, 'Puesto: ');
+            } else {
+                $pdf->Text($x, $y + 5, 'Numero de Certificado:');
+                $pdf->Text($x, $y + 10, 'Emisor:');
+                $pdf->Text($x, $y + 15, 'Firma Electronica:');
+                $pdf->Text($x, $y + 27, 'Fecha y hora de Firma:');
+                $pdf->Text($x, $y + 32, 'Puesto: ');
+            }
+            
+            $pdf->SetTextColor($fontColor);
+            $pdf->Text($x + 40, $y, $value['nombre_firmante']);
+            if ($tipo_archivo == 'Contrato') {
+                $pdf->Text($x + 130, $y, $value['no_serie_firmante']);
+                $pdf->Text($x + 40, $y + 5, 'SERVICIO DE ADMINISTRACION TRIBUTARIA');
+                $pdf->setXY($x + 39, $y + 7);
+                $pdf->MultiCell(0, 4, $value['firma_firmante'], 0, 'J', false);
+                $pdf->Text($x + 40, $y + 27, $value['fecha_firmado_firmante']);
+                $pdf->Text($x + 100, $y + 27, $value['puesto_firmante']);
+
+                $y += 40;
+            } else {
+                $pdf->Text($x + 40, $y + 5, $value['no_serie_firmante']);
+                $pdf->Text($x + 40, $y + 10, 'SERVICIO DE ADMINISTRACION TRIBUTARIA');
+                $pdf->setXY($x + 39, $y + 12);
+                $pdf->MultiCell(0, 4, $value['firma_firmante'], 0, 'J', false);
+                $pdf->Text($x + 40, $y + 27, $value['fecha_firmado_firmante']);
+                $pdf->Text($x + 40, $y + 32, $value['puesto_firmante']);
+
+                $y += 55;
+            }
+        } */
+
         foreach ($objeto['firmantes']['firmante'][0] as $value) {
             $pdf->SetTextColor(98,98,98);
-            $pdf->Text(20, 65, 'Nombre del Firmante:');
-            // $pdf->Text(20, 70, 'CURP:');
-            $pdf->Text(20, 70, 'Numero de Certificado:');
-            $pdf->Text(20, 75, 'Emisor:');
-            $pdf->Text(20, 80, 'Firma Electronica:');
-            $pdf->Text(20, 93, 'Fecha y hora de Firma:');
-            $pdf->Text(20, 98, 'Puesto: ');
-
+            $pdf->Text($x, $y, 'Nombre del Firmante:');
+            if ($tipo_archivo == 'Contrato') {
+                $pdf->Text($x + 100, $y, 'Numero de Certificado:');
+                $pdf->Text($x, $y + 5, 'Emisor:');
+                $pdf->Text($x, $y + 10, 'Firma Electronica:');
+                $pdf->Text($x, $y + 27, 'Fecha y hora de Firma:');
+                $pdf->Text($x + 80, $y + 27, 'Puesto:');
+            } else {
+                $pdf->Text($x, $y + 5, 'Numero de Certificado:');
+                $pdf->Text($x, $y + 10, 'Emisor:');
+                $pdf->Text($x, $y + 15, 'Firma Electronica:');
+                $pdf->Text($x, $y + 27, 'Fecha y hora de Firma:');
+                $pdf->Text($x, $y + 32, 'Puesto:');
+            }
+            
             $pdf->SetTextColor($fontColor);
-            $pdf->Text(80, 65, $value['_attributes']['nombre_firmante']);
-            // $pdf->Text(80, 70, $value['_attributes']['curp_firmante']);
-            $pdf->Text(80, 70, $value['_attributes']['no_serie_firmante']);
-            $pdf->Text(80, 75, 'SERVICIO DE ADMINISTRACION TRIBUTARIA');
-            $pdf->setXY(79, 77);
-            $pdf->MultiCell(0, 4, $value['_attributes']['firma_firmante'], 0, 'J', false);
-            $pdf->Text(80, 93, $value['_attributes']['fecha_firmado_firmante']);
-            $pdf->Text(80, 98, $value['_attributes']['puesto_firmante']);
+            $pdf->Text($x + 40, $y, $value['_attributes']['nombre_firmante']);
+            if ($tipo_archivo == 'Contrato') {
+                $pdf->Text($x + 130, $y, $value['_attributes']['no_serie_firmante']);
+                $pdf->Text($x + 40, $y + 5, 'SERVICIO DE ADMINISTRACION TRIBUTARIA');
+                $pdf->setXY($x + 39, $y + 7);
+                $pdf->MultiCell(0, 4, $value['_attributes']['firma_firmante'], 0, 'J', false);
+                $pdf->Text($x + 40, $y + 27, $value['_attributes']['fecha_firmado_firmante']);
+                $pdf->Text($x + 100, $y + 27, $value['_attributes']['puesto_firmante']);
+            } else {
+                $pdf->Text($x + 40, $y + 5, $value['_attributes']['no_serie_firmante']);
+                $pdf->Text($x + 40, $y + 10, 'SERVICIO DE ADMINISTRACION TRIBUTARIA');
+                $pdf->setXY($x + 39, $y + 12);
+                $pdf->MultiCell(0, 4, $value['_attributes']['firma_firmante'], 0, 'J', false);
+                $pdf->Text($x + 40, $y + 27, $value['_attributes']['fecha_firmado_firmante']);
+                $pdf->Text($x + 40, $y + 32, $value['_attributes']['puesto_firmante']);
+            }
         }
-        // $pdf->Image($image,10,10,-300);
+
         $locat = storage_path('app/public/qrcode/qrcode.png');
         $location = str_replace('\\','/', $locat);
-        // QRcode::png("coded number here", $location);
         \PHPQRCode\QRcode::png("Test", $location, 'L', 10, 0);
 
-
-        // $pdf->Image("test.png", 40, 10, 20, 20, "png");
-        $pdf->Image($location, 16, 185, 20, 20, "png");
-        
-        $pdf->Text(45, 190, 'Para verificar la integridad de este documento, favor de escanear el codigo QR o visitar el enlace:');
-        $pdf->Text(45, 195, 'https://ejemplo.chiapas.gob.mx');
-
-
+        if ($tipo_archivo == 'Contrato') {
+            $pdf->Image($location, 16, 270, 20, 20, "png");
+            $pdf->Text(45, 275, 'Para verificar la integridad de este documento, favor de escanear el codigo QR o visitar el enlace:');
+            $pdf->Text(45, 280, 'https://ejemplo.chiapas.gob.mx');
+        } else {
+            $pdf->Image($location, 16, 185, 20, 20, "png");
+            $pdf->Text(45, 190, 'Para verificar la integridad de este documento, favor de escanear el codigo QR o visitar el enlace:');
+            $pdf->Text(45, 195, 'https://ejemplo.chiapas.gob.mx');
+        }
         $pdf->Output('I', $objeto['archivo']['_attributes']['nombre_archivo']);
     }
 

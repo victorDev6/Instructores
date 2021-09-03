@@ -51,13 +51,13 @@ class RegisterController extends Controller
     {
         return Validator::make($data, [
             'name' => ['required', 'string', 'max:255'],
-            'usuario' => ['required'],
+            // 'usuario' => ['required'],
             'curp' => ['required'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ],[
             'name.required' => 'El nombre es requerido',
-            'usuario.required' => 'El tipo de usuario es requerido',
+            // 'usuario.required' => 'El tipo de usuario es requerido',
             'curp.required' => 'La curp es requerida',
             'email.required' => 'El correo es requerido',
             'password.required' => 'La contraseña es requerida',
@@ -76,7 +76,7 @@ class RegisterController extends Controller
     {
         return User::create([
             'name' => $data['name'],
-            'tipo_usuario' => $data['usuario'],
+            'tipo_usuario' => 1,
             'curp' => $data['curp'],
             'id_sivyc' => $id,
             'email' => $data['email'],

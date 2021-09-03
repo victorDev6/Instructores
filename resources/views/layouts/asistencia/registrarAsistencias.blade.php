@@ -89,6 +89,7 @@
                                 <table class="table table-bordered table-striped">
                                     <thead>
                                         <tr>
+                                            <th>N°</th>
                                             <th>Alumnos</th>
                                             @foreach ($dias as $dia)
                                                 <th>{{$dia}}</th>
@@ -97,9 +98,10 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($alumnos as $alumno)
+                                        @foreach ($alumnos as $key => $alumno)
                                             <input class="d-none" type="text" name="alumnos[]" value="{{$alumno->id}}">
                                             <tr>
+                                                <td class="static">{{$key + 1}}</td>
                                                 <td class="static">{{$alumno->alumno}}</td>
                                                 @foreach ($dias as $dia)
                                                     <td>
