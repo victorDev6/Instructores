@@ -33,9 +33,9 @@
 @section('content')
     
     <div class="container-fluid pt-4">
-        @if ($message = Session::get('success'))
+        @if ($messages = Session::get('success'))
             <div class="alert alert-success">
-                <p>{{ $message }}</p>
+                <p>{{ $messages }}</p>
             </div>
         @endif
 
@@ -56,90 +56,101 @@
                 </div>
 
                 @if (isset($curso))
-                    @if (count($alumnos) > 0)
-                        <div class="row bg-secondary mt-3" style="padding:10px">
-                            <div class="form-group col-md-6">
-                                CURSO: <b>{{ $curso->curso }}</b>
-                            </div>
-                            <div class="form-group col-md-4">
-                                INSTRUCTOR: <b>{{ $curso->nombre }}</b>
-                            </div>
-                            <div class="form-group col-md-2">
-                                DURACI&Oacute;N: <b>{{ $curso->dura }} hrs.</b>
-                            </div>
-                            <div class="form-group col-md-6">
-                                ESPECIALIDAD: <b>{{ $curso->espe }}</b>
-                            </div>
-                            <div class="form-group col-md-6">
-                                &Aacute;REA: <b>{{ $curso->area }}</b>
-                            </div>
-                            <div class="form-group col-md-6">
-                                FECHAS DEL <b> {{ $curso->inicio }}</b> AL <b>{{ $curso->termino }}</b>
-                            </div>
-                            <div class="form-group col-md-4">
-                                HORARIO: <b>{{ $curso->hini }} A {{ $curso->hfin }}</b>
-                            </div>
-                            <div class="form-group col-md-2">
-                                CICLO: <b>{{ $curso->ciclo }}</b>
-                            </div>
+                    @if ($message == 'denegado')
+                        <div class="alert alert-success mt-4">
+                            <p>Acceso denegado. El curso le pertenece a otro instructor</p>
                         </div>
-
-                        <div class="row">
-                            <div class="table-responsive">
-                                <table class="table table-bordered table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th>N°</th>
-                                            <th>Alumnos</th>
-                                            @foreach ($dias as $dia)
-                                                <th>{{$dia}}</th>
-                                                <input class="d-none" type="text" name="fechas[]" value="{{$dia}}">
-                                            @endforeach
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($alumnos as $key => $alumno)
-                                            <input class="d-none" type="text" name="alumnos[]" value="{{$alumno->id}}">
-                                            <tr>
-                                                <td class="static">{{$key + 1}}</td>
-                                                <td class="static">{{$alumno->alumno}}</td>
-                                                @foreach ($dias as $dia)
-                                                    <td>
-                                                        <div class="custom-control custom-checkbox d-flex justify-content-center">
-                                                            <input type="checkbox"
-                                                                @if ($alumno->asistencias != null)
-                                                                    @foreach ($alumno->asistencias as $asistencia)
-                                                                        @if ($asistencia['fecha'] == $dia && $asistencia['asistencia'] == true)
-                                                                            checked
-                                                                        @endif
-                                                                    @endforeach
-                                                                @endif
-                                                                value="{{ $alumno->id }} {{$dia}}"
-                                                                class="custom-control-input" name="asistencias[]"
-                                                                id="check + {{ $alumno->id }} + {{$dia}}">
-                                                            <label class="custom-control-label"
-                                                                for="check + {{ $alumno->id }} + {{$dia}}"></label>
-                                                        </div> 
-                                                    </td>
-                                                @endforeach
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col d-flex justify-content-end mt-2">
-                                <button id="btnLista" type="button" class="btn btn-outline-info mr-2">GENERAR LISTA DE ASISTENCIA</button>
-                                <button id="btnGuardar" type="button" class="btn btn-outline-success">GUARDAR ASISTENCIAS</button>
-                            </div>
+                    @elseif($message == 'noDisponible')
+                        <div class="alert alert-success mt-4">
+                            <p>El Curso fué {{$curso->status}} y turnado a {{$curso->turnado}}.</p>
                         </div>
                     @else
-                        <div class="alert alert-success mt-4">
-                            <p>No hay alumnos registrados en el curso</p>
-                        </div>
+                        @if (count($alumnos) > 0)
+                            <div class="row bg-secondary mt-3" style="padding:10px">
+                                <div class="form-group col-md-6">
+                                    CURSO: <b>{{ $curso->curso }}</b>
+                                </div>
+                                <div class="form-group col-md-4">
+                                    INSTRUCTOR: <b>{{ $curso->nombre }}</b>
+                                </div>
+                                <div class="form-group col-md-2">
+                                    DURACI&Oacute;N: <b>{{ $curso->dura }} hrs.</b>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    ESPECIALIDAD: <b>{{ $curso->espe }}</b>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    &Aacute;REA: <b>{{ $curso->area }}</b>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    FECHAS DEL <b> {{ $curso->inicio }}</b> AL <b>{{ $curso->termino }}</b>
+                                </div>
+                                <div class="form-group col-md-4">
+                                    HORARIO: <b>{{ $curso->hini }} A {{ $curso->hfin }}</b>
+                                </div>
+                                <div class="form-group col-md-2">
+                                    CICLO: <b>{{ $curso->ciclo }}</b>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>N°</th>
+                                                <th>Alumnos</th>
+                                                @foreach ($dias as $dia)
+                                                    <th>{{$dia}}</th>
+                                                    <input class="d-none" type="text" name="fechas[]" value="{{$dia}}">
+                                                @endforeach
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($alumnos as $key => $alumno)
+                                                <input class="d-none" type="text" name="alumnos[]" value="{{$alumno->id}}">
+                                                <tr>
+                                                    <td class="static">{{$key + 1}}</td>
+                                                    <td class="static">{{$alumno->alumno}}</td>
+                                                    @foreach ($dias as $dia)
+                                                        <td>
+                                                            <div class="custom-control custom-checkbox d-flex justify-content-center">
+                                                                <input type="checkbox"
+                                                                    @if ($alumno->asistencias != null)
+                                                                        @foreach ($alumno->asistencias as $asistencia)
+                                                                            @if ($asistencia['fecha'] == $dia && $asistencia['asistencia'] == true)
+                                                                                checked
+                                                                            @endif
+                                                                        @endforeach
+                                                                    @endif
+                                                                    value="{{ $alumno->id }} {{$dia}}"
+                                                                    class="custom-control-input" name="asistencias[]"
+                                                                    id="check + {{ $alumno->id }} + {{$dia}}">
+                                                                <label class="custom-control-label"
+                                                                    for="check + {{ $alumno->id }} + {{$dia}}"></label>
+                                                            </div> 
+                                                        </td>
+                                                    @endforeach
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col d-flex justify-content-end mt-2">
+                                    <button id="btnLista" type="button" class="btn btn-outline-info mr-2">GENERAR LISTA DE ASISTENCIA</button>
+                                    @if (!$curso->asis_finalizado)
+                                        <button id="btnGuardar" type="button" class="btn btn-outline-success">GUARDAR ASISTENCIAS</button>
+                                    @endif
+                                </div>
+                            </div>
+                        @else
+                            <div class="alert alert-success mt-4">
+                                <p>No hay alumnos registrados en el curso</p>
+                            </div>
+                        @endif
                     @endif
-                    
                 @endif
             </div>
         </div>
@@ -164,11 +175,13 @@
         });
 
         $('#btnLista').click(function () {
-            if(confirm('¿Esta seguro de generar la lista de asistencia?') == true) {
+            if(confirm('¿Esta seguro de generar la lista de asistencia? \n Ya no podra modificar las asistencias despues.') == true) {
                 // $('#frm').attr('action', "{{route('asistencia.pdf')}}");
                 // $('#frm').attr('method', "post");
                 $('#frmPdf').attr('target', "_blanck");  
-                $('#frmPdf').submit(); 
+                $('#frmPdf').submit();
+                // location.reload();
+                $('#btnGuardar').addClass('d-none'); 
             }
         });
     </script>

@@ -38,82 +38,89 @@
                     </div>
                 </div>
 
-                {{-- {{$curso}} --}}
                 @if (isset($curso))
-                    <div class="row bg-secondary mt-3" style="padding:20px">
-                        <div class="form-group col-md-6">
-                            CURSO: <b>{{ $curso->curso }}</b>
+                    @if ($denegado == 'denegado')
+                        <div class="alert alert-success mt-4">
+                            <p>Acceso denegado. El curso le pertenece a otro instructor</p>
                         </div>
-                        <div class="form-group col-md-4">
-                            INSTRUCTOR: <b>{{ $curso->nombre }}</b>
+                    @else
+                        <div class="row bg-secondary mt-3" style="padding:20px">
+                            <div class="form-group col-md-6">
+                                CURSO: <b>{{ $curso->curso }}</b>
+                            </div>
+                            <div class="form-group col-md-4">
+                                INSTRUCTOR: <b>{{ $curso->nombre }}</b>
+                            </div>
+                            <div class="form-group col-md-2">
+                                DURACI&Oacute;N: <b>{{ $curso->dura }} hrs.</b>
+                            </div>
+                            <div class="form-group col-md-6">
+                                ESPECIALIDAD: <b>{{ $curso->espe }}</b>
+                            </div>
+                            <div class="form-group col-md-6">
+                                &Aacute;REA: <b>{{ $curso->area }}</b>
+                            </div>
+                            <div class="form-group col-md-6">
+                                FECHAS DEL <b> {{ $curso->inicio }}</b> AL <b>{{ $curso->termino }}</b>
+                            </div>
+                            <div class="form-group col-md-4">
+                                HORARIO: <b>{{ $curso->hini }} A {{ $curso->hfin }}</b>
+                            </div>
+                            <div class="form-group col-md-2">
+                                CICLO: <b>{{ $curso->ciclo }}</b>
+                            </div>
                         </div>
-                        <div class="form-group col-md-2">
-                            DURACI&Oacute;N: <b>{{ $curso->dura }} hrs.</b>
-                        </div>
-                        <div class="form-group col-md-6">
-                            ESPECIALIDAD: <b>{{ $curso->espe }}</b>
-                        </div>
-                        <div class="form-group col-md-6">
-                            &Aacute;REA: <b>{{ $curso->area }}</b>
-                        </div>
-                        <div class="form-group col-md-6">
-                            FECHAS DEL <b> {{ $curso->inicio }}</b> AL <b>{{ $curso->termino }}</b>
-                        </div>
-                        <div class="form-group col-md-4">
-                            HORARIO: <b>{{ $curso->hini }} A {{ $curso->hfin }}</b>
-                        </div>
-                        <div class="form-group col-md-2">
-                            CICLO: <b>{{ $curso->ciclo }}</b>
-                        </div>
-                    </div>
 
-                    <div class="row">
-                        <div class="table-responsive ">
-                            <table class="table table-bordered table-striped">
-                                <thead>
-                                    <tr>
-                                        <th scope="col">N°</th>
-                                        <th scope="col">MATR&Iacute;CULA</th>
-                                        <th scope="col">ALUMNOS</th>
-                                        <th scope="col" class="text-center" width="10%">FOLIO ASIGNADO</th>
-                                        <th scope="col" class="text-center" width="10%">CALIFICACI&Oacute;N</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php $cambios = false; ?>
-                                    @foreach ($alumnos as $key => $a)
+                        <div class="row">
+                            <div class="table-responsive ">
+                                <table class="table table-bordered table-striped">
+                                    <thead>
                                         <tr>
-                                            <td>{{$key + 1}}</td>
-                                            <td> {{ $a->matricula }} </td>
-                                            <td> {{ $a->alumno }} </td>
-                                            <td class="text-center">
-                                            @if ($a->folio) {{ $a->folio }} @else
-                                                    {{ 'NINGUNO' }} @endif
-                                            </td>
-                                            <td>
-                                                @if (!$a->folio or $a->folio == '0')
-                                                    <?php $cambios = true; ?>
-                                                    {{ Form::text('calificacion[' . $a->id . ']', $a->calificacion, ['id' => $a->id, 'class' => 'form-control numero', 'required' => 'required', 'size' => 1]) }}
-                                                @else
-                                                    {{ $a->calificacion }}
-                                                @endif
-                                            </td>
+                                            <th scope="col">N°</th>
+                                            <th scope="col">MATR&Iacute;CULA</th>
+                                            <th scope="col">ALUMNOS</th>
+                                            <th scope="col" class="text-center" width="10%">FOLIO ASIGNADO</th>
+                                            <th scope="col" class="text-center" width="10%">CALIFICACI&Oacute;N</th>
                                         </tr>
-                                    @endforeach
-                                </tbody>
-                                <tfoot>
-                                    <tr>
-                                        @if (count($alumnos) > 0 and $fecha_valida >= 0 and $cambios == true)
-                                            <td colspan="5" class="text-right">
-                                                {{ Form::button('GENERAR LISTA DE CALIFICACIONES', ['id' => 'reporte', 'class' => 'btn btn-outline-info']) }}
-                                                {{ Form::button('GUARDAR CAMBIOS', ['id' => 'guardar', 'class' => 'btn btn-outline-success']) }}
-                                            </td>
-                                        @endif
-                                    </tr>
-                                </tfoot>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        <?php $cambios = false; ?>
+                                        @foreach ($alumnos as $key => $a)
+                                            <tr>
+                                                <td>{{$key + 1}}</td>
+                                                <td> {{ $a->matricula }} </td>
+                                                <td> {{ $a->alumno }} </td>
+                                                <td class="text-center">
+                                                @if ($a->folio) {{ $a->folio }} @else
+                                                        {{ 'NINGUNO' }} @endif
+                                                </td>
+                                                <td>
+                                                    @if (!$a->folio or $a->folio == '0')
+                                                        <?php $cambios = true; ?>
+                                                        {{ Form::text('calificacion[' . $a->id . ']', $a->calificacion, ['id' => $a->id, 'class' => 'form-control numero', 'required' => 'required', 'size' => 1]) }}
+                                                    @else
+                                                        {{ $a->calificacion }}
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            @if (count($alumnos) > 0 and $fecha_valida >= 0 and $cambios == true)
+                                                <td colspan="5" class="text-right">
+                                                    {{ Form::button('GENERAR LISTA DE CALIFICACIONES', ['id' => 'reporte', 'class' => 'btn btn-outline-info']) }}
+                                                    @if (!$curso->calif_finalizado)
+                                                        {{ Form::button('GUARDAR CAMBIOS', ['id' => 'guardar', 'class' => 'btn btn-outline-success']) }} 
+                                                    @endif
+                                                </td>
+                                            @endif
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
                         </div>
-                    </div>
+                    @endif
                 @endif
             </div>
         </div>
@@ -143,12 +150,14 @@
             });
 
             $('#reporte').click(function () {
-                if(confirm("¿Está seguro de generar el reporte de calificaciones?")==true){
+                if(confirm("¿Está seguro de generar el reporte de calificaciones? \n Ya no podra modificar las calificaciones despues.")==true){
                     // $('#frm').attr('action', "{{route('calificaciones.pdf')}}");
                     // $('#frm').attr('method', "post"); 
                     // $('#frm').attr('target', "_blanck"); 
                     // $('#frm').submit(); 
                     $('#formPDF').submit(); 
+                    // location.reload();
+                    $('#guardar').addClass('d-none');
                 }
             });
         });       
