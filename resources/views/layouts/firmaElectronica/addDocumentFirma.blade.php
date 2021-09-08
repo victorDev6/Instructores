@@ -70,14 +70,15 @@
                                     <option value="" selected>Tipo de Documento</option>
                                     <option value="Lista de asistencia">Lista de asistencia</option>
                                     <option value="Lista de calificaciones">Lista de calificaciones</option>
-                                    <option value="Contrato">Contrato</option>
+                                    {{-- <option value="Contrato">Contrato</option> --}}
                                 </select>
                             </div>
                         </div>
 
                         <div class="row mt-3">
                             <div class="col">
-                                <input type="text" id="no_oficio" name="no_oficio" class="form-control" placeholder="N° de oficio o clave de curso">
+                                {{-- <input type="text" id="no_oficio" name="no_oficio" class="form-control" placeholder="N° de oficio o clave de curso"> --}}
+                                <input type="text" id="no_oficio" name="no_oficio" class="form-control" placeholder="Clave de curso">
                             </div>
                         </div>
 
