@@ -125,7 +125,7 @@
                     <td width="10%">&nbsp; </td>
                     <td width="25%">
                         <br /><br /><br /><br /><br /><br />
-                        {{ $curso->nombre }}
+                        {{ $curso['nombre'] }}
                         <hr width="280px" />
                         NOMBRE Y FIRMA DEL INSTRUCTOR
                         <br /><br /><br />
@@ -164,22 +164,22 @@
                             >
                             <div id="curso">
                                 UNIDAD DE CAPACITACI&Oacute;N: 
-                                <span class="tab">{{ $curso->plantel }} {{ $curso->unidad }}</span>
-                                CLAVE CCT: <span class="tab">{{ $curso->cct }}</span>
-                                CICLO ESCOLAR: <span class="tab">{{ $curso->ciclo }}</span>
-                                GRUPO: <span class="tab">{{ $curso->grupo }}</span>
+                                <span class="tab">{{ $curso['plantel'] }} {{ $curso['unidad'] }}</span>
+                                CLAVE CCT: <span class="tab">{{ $curso['cct'] }}</span>
+                                CICLO ESCOLAR: <span class="tab">{{ $curso['ciclo'] }}</span>
+                                GRUPO: <span class="tab">{{ $curso['grupo'] }}</span>
                                 MES: <span class="tab">{{$mes['mes']}}</span>
                                 A&Ntilde;O: &nbsp;&nbsp;{{ $mes['year'] }}
                                 <br />
-                                AREA: <span class="tab1">{{ $curso->area }}</span>
-                                ESPECIALIDAD: <span class="tab1">{{ $curso->espe }}</span>
-                                CURSO: <span class="tab1"> {{ $curso->curso }}</span>
-                                CLAVE: &nbsp;&nbsp; {{ $curso->clave }}
+                                AREA: <span class="tab1">{{ $curso['area'] }}</span>
+                                ESPECIALIDAD: <span class="tab1">{{ $curso['espe'] }}</span>
+                                CURSO: <span class="tab1"> {{ $curso['curso'] }}</span>
+                                CLAVE: &nbsp;&nbsp; {{ $curso['clave'] }}
                                 <br />
-                                FECHA INICIO: <span class="tab1"> {{ $curso->fechaini }}</span>
-                                FECHA TERMINO: <span class="tab1"> {{ $curso->fechafin }}</span>
-                                HORARIO: <span class="tab2"> {{ $curso->dia }} DE {{ $curso->hini }} A {{ $curso->hfin }}</span>
-                                CURP: &nbsp;&nbsp;{{ $curso->curp }}
+                                FECHA INICIO: <span class="tab1"> {{ $curso['fechaini'] }}</span>
+                                FECHA TERMINO: <span class="tab1"> {{ $curso['fechafin'] }}</span>
+                                HORARIO: <span class="tab2"> {{ $curso['dia'] }} DE {{ $curso['hini'] }} A {{ $curso['hfin'] }}</span>
+                                CURP: &nbsp;&nbsp;{{ $curso['curp'] }}
                             </div>
                         </td>
                     </tr>
@@ -221,18 +221,18 @@
                         @endphp
                         <tr>
                             <td>{{ $consec++ }}</td>
-                            <td>{{ $a->matricula }}</td>
-                            <td>{{ $a->alumno }}</td>
+                            <td>{{ $a['matricula'] }}</td>
+                            <td>{{ $a['alumno'] }}</td>
                             @foreach ($mes['dias'] as $dia)
                                 <td>
-                                    @if ($a->asistencias != null)
-                                        @foreach ($a->asistencias as $asistencia)
-                                            @if ($asistencia['fecha'] == $dia && $asistencia['asistencia'] == true)
+                                    @if ($a['asistencias'] != null)
+                                        @foreach (json_decode($a['asistencias']) as $asistencia)
+                                            @if ($asistencia->fecha == $dia && $asistencia->asistencia == true)
                                                 <strong>*</strong>
                                                 @php
                                                     $tAsis++
                                                 @endphp
-                                            @elseif($asistencia['fecha'] == $dia && $asistencia['asistencia'] == false)
+                                            @elseif($asistencia->fecha == $dia && $asistencia->asistencia == false)
                                                 x
                                                 @php
                                                     $tFalta++
