@@ -11,7 +11,6 @@ use App\tbl_inscripcion;
 use DateInterval;
 use DateTime;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Http;
 
 class AsistenciaController extends Controller
 {
@@ -26,30 +25,28 @@ class AsistenciaController extends Controller
         $clave = $request->clave;
         if ($clave != null) session(['claveAsis' => $clave]);
         else $clave = session('claveAsis');
-        // $curso = tbl_cursos::where('clave', '=', $clave)->first();
-        $cursor = Http::get('http://127.0.0.1:8000/api/instructores/asistencia/'.$clave);
-        $curso = $cursor->json();
+        $curso = tbl_cursos::where('clave', '=', $clave)->first();
 
         $dias = [];
         $alumnos = [];
         $fecha_valida = NULL;
         $fecha_hoy = date("d-m-Y");
         if ($curso) {
-            if ($curso['id_instructor'] == Auth::user()->id_sivyc) {
-                $inicio = $curso['inicio'];
-                $termino = $curso['termino'];
+            if ($curso->id_instructor == Auth::user()->id_sivyc) {
+                $inicio = $curso->inicio;
+                $termino = $curso->termino;
                 for ($i = $inicio; $i <= $termino; $i = date("Y-m-d", strtotime($i . "+ 1 days"))) {
                     array_push($dias, $i);
                 }
 
-                if (Auth::user()->unidad == 1) $fecha_penultimo = date("Y-m-d", strtotime($termino . "- 3 days"));
-                else $fecha_penultimo = date("Y-m-d", strtotime($termino . "- 1 days"));
+                if (Auth::user()->unidad == 1) $fecha_penultimo = date("Y-m-d", strtotime($curso->termino . "- 3 days"));
+                else $fecha_penultimo = date("Y-m-d", strtotime($curso->termino . "- 1 days"));
                 $fecha_valida = strtotime($fecha_hoy) - strtotime($fecha_penultimo);
                 
                 // if ($fecha_valida < 0) $message = 'noProcede';
 
-                if ($curso['turnado'] == "UNIDAD" and $curso['status'] != "REPORTADO" and $curso['status'] != "CANCELADO") {
-                    /* $alumnos = DB::connection('pgsql')->table('tbl_inscripcion as i')->select(
+                if ($curso->turnado == "UNIDAD" and $curso->status != "REPORTADO" and $curso->status != "CANCELADO") {
+                    $alumnos = DB::connection('pgsql')->table('tbl_inscripcion as i')->select(
                             'i.id',
                             'i.matricula',
                             'i.alumno',
@@ -60,27 +57,27 @@ class AsistenciaController extends Controller
                             $join->on('f.id', '=', 'i.id_folio');
                         })->where('i.id_curso', $curso->id)
                             ->where('i.status', 'INSCRITO')
-                            ->orderby('i.alumno')->get(); */
-                    $alumnosr = Http::get('http://127.0.0.1:8000/api/instructores/asistencia/alumnos/'.$curso['id']);
-                    $alumnos = $alumnosr->json();
+                            ->orderby('i.alumno')->get();
 
                     foreach ($alumnos as $key => $value) {
-                        $value['asistencias'] = json_decode($value['asistencias'], true);
+                        $value->asistencias = json_decode($value->asistencias, true);
                     }
                 } else $message = 'noDisponible';
                 
             } else $message = 'denegado';
             
         }
-
         return view('layouts.asistencia.registrarAsistencias', compact('clave', 'curso', 'dias', 'alumnos', 'message'));
     }
 
     public function update(Request $request) {
+        $message = '';
+        $fechas = $request->fechas;
+        $alumnos = $request->alumnos;
         $asistencias = $request->asistencias;
 
         if ($asistencias != null) {
-            /*foreach ($alumnos as $alumno) {
+            foreach ($alumnos as $alumno) {
                 $asisAlumno = [];
                 foreach ($fechas as $fecha) {
                     $bandera = false;
@@ -103,18 +100,11 @@ class AsistenciaController extends Controller
                 // se actualiza el alumno en la bd
                 tbl_inscripcion::where('id', '=', $alumno)->update(['asistencias' => $asisAlumno]);
                 $message = 'Las asistencias se guardaron exitosamente';
-            }*/
-            $response = Http::post('http://127.0.0.1:8000/api/instructores/asistencia/alumnos/update', [$request->all()]);
-            $value = $response->json();
-
-            if ($value == 'success') {
-                return redirect()->route('asistencia.inicio')->with('success', 'ASISTENCIAS GUARDADAS EXITOSAMENTE!');
-            } else {
-                return redirect()->route('asistencia.inicio')->with('success', 'Ocurrio un error al guardar las asistencias, por favor intentelo de nuevo');
             }
-        } else {
-            return redirect()->route('asistencia.inicio')->with('success', 'Debe marcar los checks en la fecha que los alumnos asistieron a la capacitación');
-        }
+        } else $message = 'Debe marcar los checks en la fecha que los alumnos asistieron a la capacitación';
+
+        // return redirect('/Asistencia/inicio')->with(['message'=>$message]);
+        return redirect()->route('asistencia.inicio')->with('success', 'ASISTENCIAS GUARDADAS EXITOSAMENTE!');
     }
 
     public function asistenciaPdf(Request $request) {
@@ -122,7 +112,7 @@ class AsistenciaController extends Controller
 
         if ($clave) {
             // $curso = tbl_cursos::where('clave', '=', $clave)->first();
-            /* $curso = DB::connection('pgsql')->table('tbl_cursos')->select(
+            $curso = DB::connection('pgsql')->table('tbl_cursos')->select(
                 'tbl_cursos.*',
                 DB::raw('right(clave,4) as grupo'),
                 'inicio',
@@ -131,13 +121,10 @@ class AsistenciaController extends Controller
                 DB::raw("to_char(termino, 'DD/MM/YYYY') as fechafin"),
                 'u.plantel',
                 )->where('clave',$clave);
-            $curso = $curso->leftjoin('tbl_unidades as u','u.unidad','tbl_cursos.unidad')->first(); */
-            $cursor = Http::get('http://127.0.0.1:8000/api/instructores/asistencia/pdf/'.$clave);
-            $curso = $cursor->json();
-
+            $curso = $curso->leftjoin('tbl_unidades as u','u.unidad','tbl_cursos.unidad')->first();
             if ($curso) {
-                if ($curso['turnado'] == "UNIDAD" and $curso['status'] != "REPORTADO" and $curso['status'] != "CANCELADO") {
-                    /* $alumnos = DB::connection('pgsql')->table('tbl_inscripcion as i')->select(
+                if ($curso->turnado == "UNIDAD" and $curso->status != "REPORTADO" and $curso->status != "CANCELADO") {
+                    $alumnos = DB::connection('pgsql')->table('tbl_inscripcion as i')->select(
                         'i.id',
                         'i.matricula',
                         'i.alumno',
@@ -148,36 +135,27 @@ class AsistenciaController extends Controller
                         $join->on('f.id', '=', 'i.id_folio');
                     })->where('i.id_curso', $curso->id)
                         ->where('i.status', 'INSCRITO')
-                        ->orderby('i.alumno')->get(); */
-                    $alumnosr = Http::get('http://127.0.0.1:8000/api/instructores/asistencia/alumnos/'.$curso['id']);
-                    $alumnos = $alumnosr->json();
-
+                        ->orderby('i.alumno')->get();
                     if (!$alumnos) return "NO HAY ALUMNOS INSCRITOS";
 
                     foreach ($alumnos as $key => $value) {
-                        $value['asistencias'] = json_decode($value['asistencias'], true);
+                        $value->asistencias = json_decode($value->asistencias, true);
                     }
                     $mes = $this->mes;
                     $consec = 1;
-                    if ($curso['inicio'] and $curso['termino']) {
-                        $inicio = explode('-', $curso['inicio']); $inicio[2] = '01';
-                        $termino = explode('-', $curso['termino']); $termino[2] = '01';
+                    if ($curso->inicio and $curso->termino) {
+                        $inicio = explode('-', $curso->inicio); $inicio[2] = '01';
+                        $termino = explode('-', $curso->termino); $termino[2] = '01';
                         $meses = $this->verMeses(array($inicio[0].'-'.$inicio[1].'-'.$inicio[2], $termino[0].'-'.$termino[1].'-'.$termino[2]));
                         
                     } else  return "El Curso no tiene registrado la fecha de inicio y de termino";
 
-                    // tbl_cursos::where('id', $curso->id)->update(['asis_finalizado' => true]);
-                    $respo = Http::get('http://127.0.0.1:8000/api/instructores/asistencia/curso/'.$curso['id']);
-                    $response = $respo->json();
+                    tbl_cursos::where('id', $curso->id)->update(['asis_finalizado' => true]);
 
-                    if ($response == 'success') {
-                        $pdf = PDF::loadView('layouts.asistencia.reporteAsistencia', compact('curso', 'alumnos', 'mes', 'consec', 'meses'));
-                        $pdf->setPaper('Letter', 'landscape');
-                        $file = "LISTA_ASISTENCIA_$clave.PDF";
-                        return $pdf->stream($file);
-                    } else {
-                        return 'Ocurrio un error, intentelo de nuevo';
-                    }
+                    $pdf = PDF::loadView('layouts.asistencia.reporteAsistencia', compact('curso', 'alumnos', 'mes', 'consec', 'meses'));
+                    $pdf->setPaper('Letter', 'landscape');
+                    $file = "LISTA_ASISTENCIA_$clave.PDF";
+                    return $pdf->stream($file);
 
                     // if ($fecha_valida < 0) $message = "No prodece el registro de calificaciones, la fecha de termino del curso es el $curso->termino.";
                 } // else $message = "El Curso fué $curso->status y turnado a $curso->turnado.";
