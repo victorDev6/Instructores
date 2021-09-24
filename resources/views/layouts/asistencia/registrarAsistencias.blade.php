@@ -138,6 +138,7 @@
                                 </div>
                             </div>
                             <div class="row">
+                                <input class="d-none" type="text" id="asis_finalizado" value="{{$curso->asis_finalizado}}">
                                 <div class="col d-flex justify-content-end mt-2">
                                     <button id="btnLista" type="button" class="btn btn-outline-info mr-2">GENERAR LISTA DE ASISTENCIA</button>
                                     @if (!$curso->asis_finalizado)
@@ -175,14 +176,18 @@
         });
 
         $('#btnLista').click(function () {
-            if(confirm('¿Esta seguro de generar la lista de asistencia? \n Ya no podra modificar las asistencias despues.') == true) {
-                // $('#frm').attr('action', "{{route('asistencia.pdf')}}");
-                // $('#frm').attr('method', "post");
+            var asis_finalizado = $('#asis_finalizado').val();
+            if (!asis_finalizado) {
+                if(confirm('¿Esta seguro de generar la lista de asistencia? \n Ya no podra modificar las asistencias despues.') == true) {
+                    $('#frmPdf').attr('target', "_blanck");  
+                    $('#frmPdf').submit();
+                    $('#btnGuardar').addClass('d-none'); 
+                }
+            } else {
                 $('#frmPdf').attr('target', "_blanck");  
                 $('#frmPdf').submit();
-                // location.reload();
-                $('#btnGuardar').addClass('d-none'); 
             }
+            
         });
     </script>
 @endsection

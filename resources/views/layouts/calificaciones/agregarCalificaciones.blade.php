@@ -109,6 +109,7 @@
                                         <tr>
                                             @if (count($alumnos) > 0 and $fecha_valida >= 0 and $cambios == true)
                                                 <td colspan="5" class="text-right">
+                                                    <input class="d-none" type="text" id="calif_finalizado" value="{{$curso->calif_finalizado}}">
                                                     {{ Form::button('GENERAR LISTA DE CALIFICACIONES', ['id' => 'reporte', 'class' => 'btn btn-outline-info']) }}
                                                     @if (!$curso->calif_finalizado)
                                                         {{ Form::button('GUARDAR CAMBIOS', ['id' => 'guardar', 'class' => 'btn btn-outline-success']) }} 
@@ -138,7 +139,7 @@
     <script language="javascript">
         $(document).ready(function(){                
             $("#guardar").click(function(){
-                if(confirm("¿Está seguro de ejecutar la acción?")==true){
+                if(confirm("¿Está seguro de guardar las calificaciones?")==true){
                     $('#frm').attr('action', "{{route('calificaciones.guardar')}}");
                     $('#frm').attr('method', "post"); 
                     $('#frm').submit(); 
@@ -148,18 +149,18 @@
             $('.numero').keyup(function (){                    
                 this.value = (this.value + '').replace(/[^0-9NP]/g, '');
             });
+        });    
 
-            $('#reporte').click(function () {
-                if(confirm("¿Está seguro de generar el reporte de calificaciones? \n Ya no podra modificar las calificaciones despues.")==true){
-                    // $('#frm').attr('action', "{{route('calificaciones.pdf')}}");
-                    // $('#frm').attr('method', "post"); 
-                    // $('#frm').attr('target', "_blanck"); 
-                    // $('#frm').submit(); 
+        $('#reporte').click(function () {
+            var calif_finalizado = $('#calif_finalizado').val();
+            if (!calif_finalizado) {
+                if(confirm("¿Está seguro de generar la lista de calificaciones? \n Ya no podra modificar las calificaciones despues.")==true){
                     $('#formPDF').submit(); 
-                    // location.reload();
                     $('#guardar').addClass('d-none');
                 }
-            });
-        });       
+            } else {
+                $('#formPDF').submit();
+            }
+        });   
     </script>  
 @endsection

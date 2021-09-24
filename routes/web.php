@@ -57,3 +57,4 @@ Route::get('/firma/inicio', 'firmaElectronica\FirmaController@index')->name('fir
 Route::post('/firma/update', 'firmaElectronica\FirmaController@update')->name('firma.update');
 Route::post('/firma/sellar', 'firmaElectronica\FirmaController@sellar')->name('firma.sellar');
 Route::post('/firma/generar', 'firmaElectronica\FirmaController@generarPDF')->name('firma.generarPdf');
+Route::post('/firma/cancelar', 'FirmaElectronica\FirmaController@cancelarDocumento')->name('firma.cancelar');

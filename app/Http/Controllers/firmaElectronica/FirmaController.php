@@ -11,45 +11,82 @@ use Spatie\ArrayToXml\ArrayToXml;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
+use App\tbl_cursos;
 // use BaconQrCode\Encoder\QrCode;
 use Illuminate\Support\Facades\Http;
 use Vyuldashev\XmlToArray\XmlToArray;
 use Illuminate\Support\Facades\Storage;
+use \setasign\Fpdi\PdfParser\StreamReader;
 // use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class FirmaController extends Controller {
     
     // php artisan serve --port=8001
-    public function index() {
-        // por firmar : documentos donde su correo aparezca en el nodo firmantes
+    public function index(Request $request) {
         $email = Auth::user()->email;
-        $docsFirmar = DocumentosFirmar::where('status','!=','CANCELADO')
-                        ->whereRaw("EXISTS(SELECT TRUE FROM jsonb_array_elements(obj_documento->'firmantes'->'firmante'->0) x 
-                        WHERE x->'_attributes'->>'email_firmante' IN ('".$email."') 
-                        AND x->'_attributes'->>'firma_firmante' is null)")->orderBy('id', 'desc')->get();
+        $docsFirmar1 = DocumentosFirmar::where('status','!=','CANCELADO')
+            ->whereRaw("EXISTS(SELECT TRUE FROM jsonb_array_elements(obj_documento->'firmantes'->'firmante'->0) x 
+                WHERE x->'_attributes'->>'email_firmante' IN ('".$email."') 
+                AND x->'_attributes'->>'firma_firmante' is null)");
+            // ->orderBy('id', 'desc')->get();
 
-        $docsFirmados = DocumentosFirmar::where('status', 'EnFirma')
-                        ->whereRaw("EXISTS(SELECT TRUE FROM jsonb_array_elements(obj_documento->'firmantes'->'firmante'->0) x 
-                        WHERE x->'_attributes'->>'email_firmante' IN ('".$email."') 
-                        AND x->'_attributes'->>'firma_firmante' <> '')")
-                        ->orWhere(function($query) use ($email) {
-                            $query->where('obj_documento_interno->emisor->_attributes->email', $email)
-                                    ->where('status', 'EnFirma');
-                        })->orderBy('id', 'desc')->get();
+        $docsFirmados1 = DocumentosFirmar::where('status', 'EnFirma')
+            ->where(function ($query) use ($email) {
+                $query->whereRaw("EXISTS(SELECT TRUE FROM jsonb_array_elements(obj_documento->'firmantes'->'firmante'->0) x 
+                    WHERE x->'_attributes'->>'email_firmante' IN ('".$email."') 
+                    AND x->'_attributes'->>'firma_firmante' <> '')")
+                ->orWhere(function($query1) use ($email) {
+                    $query1->where('obj_documento_interno->emisor->_attributes->email', $email)
+                            ->where('status', 'EnFirma');
+                });
+            });
+            // ->orderBy('id', 'desc')->get();
 
-        $docsValidados = DocumentosFirmar::where('status', 'VALIDADO')
-                        ->whereRaw("EXISTS(SELECT TRUE FROM jsonb_array_elements(obj_documento->'firmantes'->'firmante'->0) x 
-                        WHERE x->'_attributes'->>'email_firmante' IN ('".$email."'))")
-                        ->orWhere(function($query) use ($email) {
-                            $query->where('obj_documento_interno->emisor->_attributes->email', $email)
-                                    ->where('status', 'VALIDADO');
-                        })->orderBy('id', 'desc')->get();
+        $docsValidados1 = DocumentosFirmar::where('status', 'VALIDADO')
+            ->where(function ($query) use ($email) {
+                $query->whereRaw("EXISTS(SELECT TRUE FROM jsonb_array_elements(obj_documento->'firmantes'->'firmante'->0) x 
+                    WHERE x->'_attributes'->>'email_firmante' IN ('".$email."'))")
+                ->orWhere(function($query1) use ($email) {
+                    $query1->where('obj_documento_interno->emisor->_attributes->email', $email)
+                            ->where('status', 'VALIDADO');
+                });
+            });
+            // ->orderBy('id', 'desc')->get();
+
+        $docsCancelados1 = DocumentosFirmar::where('status', 'CANCELADO')
+            ->where(function ($query) use ($email) {
+                $query->whereRaw("EXISTS(SELECT TRUE FROM jsonb_array_elements(obj_documento->'firmantes'->'firmante'->0) x 
+                    WHERE x->'_attributes'->>'email_firmante' IN ('".$email."'))")
+                ->orWhere(function($query1) use ($email) {
+                    $query1->where('obj_documento_interno->emisor->_attributes->email', $email)
+                            ->where('status', 'CANCELADO');
+                });
+            });
+            // ->orderBy('id', 'desc')->get();
+
+        $tipo_documento = $request->tipo_documento;
+        // if ($tipo_documento != null) {
+            session(['tipo' => $tipo_documento]);
+        // }
+        $tipo_documento = session('tipo');
+
+        if($tipo_documento == null) {
+            $docsFirmar = $docsFirmar1->orderBy('id', 'desc')->get();
+            $docsFirmados = $docsFirmados1->orderBy('id', 'desc')->get();
+            $docsValidados = $docsValidados1->orderBy('id', 'desc')->get();
+            $docsCancelados = $docsCancelados1->orderBy('id', 'desc')->get();
+        } else {
+            $docsFirmar = $docsFirmar1->where('tipo_archivo', $tipo_documento)->orderBy('id', 'desc')->get();
+            $docsFirmados = $docsFirmados1->where('tipo_archivo', $tipo_documento)->orderBy('id', 'desc')->get();
+            $docsValidados = $docsValidados1->where('tipo_archivo', $tipo_documento)->orderBy('id', 'desc')->get();
+            $docsCancelados = $docsCancelados1->where('tipo_archivo', $tipo_documento)->orderBy('id', 'desc')->get();
+        }
         
         foreach ($docsFirmar as $value) {
             $value->base64xml = base64_encode($value->documento);
         }
         
-        return view('layouts.firmaElectronica.firmaElectronica', compact('docsFirmar', 'email', 'docsFirmados', 'docsValidados'));
+        return view('layouts.firmaElectronica.firmaElectronica', compact('docsFirmar', 'email', 'docsFirmados', 'docsValidados', 'docsCancelados', 'tipo_documento'));
     }
 
     public function update(Request $request) {
@@ -148,9 +185,6 @@ class FirmaController extends Controller {
         $tipo_archivo = $documento->tipo_archivo;
         $totalFirmantes = $objeto['firmantes']['_attributes']['num_firmantes'];
 
-        $path = storage_path('app/public/uploadFiles/DocumentosFirmas/'.Auth::user()->id.'/'.$documento->nombre_archivo);
-        $result = str_replace('\\','/', $path);
-
         $array = [
             [
                 'nombre_firmante' => 'VICTOR MANUEL ORTIZ RODRIGUEZ',
@@ -170,10 +204,18 @@ class FirmaController extends Controller {
             ]
         ];
 
-
         $pdf = new Fpdi();
-        // $pdf->addPage('L','Letter');
-        $pageCount =  $pdf->setSourceFile($result);
+        if ($documento->tipo_archivo == 'Contrato') {
+            $result = $documento->link_pdf;
+            $fileContent = file_get_contents($result, 'rb');
+            $pageCount = $pdf->setSourceFile(StreamReader::createByString($fileContent));
+        } else {
+            $url = $documento->link_pdf;
+            $unity = explode('/', $url);
+            $path = storage_path('app/public/uploadFiles/DocumentosFirmas/'.$unity[6].'/'.$documento->nombre_archivo);
+            $result = str_replace('\\','/', $path);
+            $pageCount =  $pdf->setSourceFile($result);
+        }
         
         for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) { 
             $tplId = $pdf->importPage($pageNo);
@@ -312,7 +354,38 @@ class FirmaController extends Controller {
             $pdf->Text(45, 190, 'Para verificar la integridad de este documento, favor de escanear el codigo QR o visitar el enlace:');
             $pdf->Text(45, 195, 'https://ejemplo.chiapas.gob.mx');
         }
-        $pdf->Output('I', $objeto['archivo']['_attributes']['nombre_archivo']);
+        $pdf->Output('I', 'FIRMADO_'.$objeto['archivo']['_attributes']['nombre_archivo']);
+    }
+
+    public function cancelarDocumento(Request $request) {
+        $date = date('Y-m-d H:i:s');
+
+        if ($request->motivo != null) {
+            $data = [
+                'usuario' => 'instructor',
+                'id' => Auth::user()->id,
+                'motivo' => $request->motivo,
+                'fecha' => $date,
+                'correo' => Auth::user()->email
+            ];
+
+            DocumentosFirmar::where('id', $request->txtIdCancel)
+                ->update([
+                    'status' => 'CANCELADO',
+                    'cancelacion' => $data
+                ]);
+            tbl_cursos::where('clave', $request->txtClave)
+                ->update(
+                    $request->txtTipo == 'Lista de asistencia' 
+                        ? ['asis_finalizado' => false] 
+                        : ($request->txtTipo == 'Lista de calificaciones'
+                            ?  ['calif_finalizado' => false]
+                            : [])
+                );
+            return redirect()->route('firma.inicio')->with('warning', 'Documento cancelado exitosamente!');
+        } else {
+            return redirect()->route('firma.inicio')->with('danger', 'Debe ingresar el motivo de cancelación');
+        }
     }
 
 }

@@ -68,7 +68,7 @@ class CalificacionesController extends Controller {
                     ->where('id', $key)
                     ->update(['calificacion' => $val,'iduser_updated'=>Auth::user()->id]);
             }
-            if($result) $message = "Operacion exitosa!!";        
+            if($result) $message = "Calificaciones guardadas exitosamente!";        
         }else $message = "No existen cambios que guardar.";
 
         return redirect('/Calificaciones/inicio')->with(['message'=>$message, 'clave'=>$clave]);

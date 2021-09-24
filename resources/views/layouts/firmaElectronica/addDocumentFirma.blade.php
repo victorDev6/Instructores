@@ -75,6 +75,8 @@
                             </div>
                         </div>
 
+                        <div id="divQuienes" class="row"></div>
+
                         <div class="row mt-3">
                             <div class="col">
                                 {{-- <input type="text" id="no_oficio" name="no_oficio" class="form-control" placeholder="N° de oficio o clave de curso"> --}}
@@ -109,9 +111,7 @@
                         </div>
 
                         <div class="col text-center pt-3"><strong>Firmantes</strong></div>
-                        <div id="firmantes" class="row mt-3">
-
-                        </div>
+                        <div id="firmantes" class="row mt-3"></div>
 
                         <div class="row pt-3">
                             <div class="col text-center">
@@ -264,6 +264,26 @@
             if (confirm("¿Está seguro de enviar a firma este documento?") == true) {
                 $('#form').submit();
             }
+        });
+
+        $('#tipo_documento').change(function (e) {
+            value = $('#tipo_documento').val();
+            console.log(value);
+            quienes = document.getElementById('divQuienes');
+            if (value != '') {
+                quienes.innerHTML = `
+                    <div class="col">
+                        <div class="alert alert-light text-center py-1" role="alert">
+                            <p class="py-0 my-0"><strong>¿Quienes firman la ${value}?</strong></p> 
+                            <p class="py-0 my-0">* Titular del departamento academico</p>
+                            <p class="py-0 my-0">* Instructor del curso</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                quienes.innerHTML = ``;
+            }
+            
         });
     </script>
 @endsection

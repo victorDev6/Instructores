@@ -118,7 +118,7 @@
 
     </header>
 
-    <footer>
+    {{-- <footer>
         <table class="tablaf" width="100%">
             <tbody>
                 <tr>
@@ -141,7 +141,7 @@
                 </tr>
             </tbody>
         </table>
-    </footer>
+    </footer> --}}
 
     @if (isset($meses))
         @foreach ($meses as $key => $mes)

@@ -137,7 +137,7 @@
         </div>
     </header>
 
-    <footer>
+    {{-- <footer>
         <table class="tablaf" width="100%">
             <tbody>
                 <tr>
@@ -160,7 +160,7 @@
                 </tr>
             </tbody>
         </table>
-    </footer>
+    </footer> --}}
     
     <main>
         <table class="tabla">

@@ -34,6 +34,22 @@
             </div>
         </div>
 
+        <form action="{{ route('firma.inicio') }}" method="get">
+            <div class="row d-flex align-items-center py-2">
+                <div class="col">
+                    <select class="custom-select" id="tipo_documento" name="tipo_documento">
+                        <option value="" selected>Todos los documentos</option>
+                        <option {{$tipo_documento == 'Contrato' ? 'selected' : ''}} value="Contrato">Contrato</option>
+                        <option {{$tipo_documento == 'Lista de asistencia' ? 'selected' : ''}} value="Lista de asistencia">Lista de asistencia</option>
+                        <option {{$tipo_documento == 'Lista de calificaciones' ? 'selected' : ''}} value="Lista de calificaciones">Lista de calificaciones</option>
+                    </select>
+                </div>
+                <div class="col">
+                    <button type="submit" class="btn btn-info">Buscar</button>
+                </div>
+            </div>
+        </form>
+
         <div class="card">
             <div class="card-header">Mis documentos</div>
             <div class="card-body px-0">
@@ -46,7 +62,8 @@
                                 <a class="nav-item nav-link active" id="nav-home-tab" data-toggle="tab" href="#nav-home" role="tab" aria-controls="nav-home" aria-selected="true">Por Firmar</a>
                                 <a class="nav-item nav-link" id="nav-firmados-tab" data-toggle="tab" href="#nav-firmados" role="tab" aria-controls="nav-firmados" aria-selected="false">Firmados</a>
                                 <a class="nav-item nav-link" id="nav-validados-tab" data-toggle="tab" href="#nav-validados" role="tab" aria-controls="nav-validados" aria-selected="false">Validados</a>
-                                </div>
+                                <a style="color: #FF5733" class="nav-item nav-link" id="nav-cancelados-tab" data-toggle="tab" href="#nav-cancelados" role="tab" aria-controls="nav-cancelados" aria-selected="false">Cancelados</a>
+                            </div>
                         </nav>
                         
                         {{-- contenido --}}
@@ -62,6 +79,7 @@
                                                     <th scope="col">Ver documento</th>
                                                     <th scope="col">Firmantes</th>
                                                     <th scope="col">Creado</th>
+                                                    <th scope="col">Cancelar</th>
                                                     <th scope="col">Firmar</th>                                           
                                                 </tr>
                                             </thead>
@@ -98,6 +116,9 @@
                                                         <td><small>{{$firmantes}}</small></td>
                                                         <td><small>{{$docFirmar->created_at->format('d-m-Y')}}</small></td>
                                                         <td>
+                                                            <button class="btn btn-outline-danger" type="button" onclick="cancelarDocumento('{{$docFirmar->id}}', '{{$nameArchivo}}', '{{$docFirmar->tipo_archivo}}', '{{$docFirmar->numero_o_clave}}')">Cancelar</button>
+                                                        </td>
+                                                        <td>
                                                             <button class="btn btn-outline-primary" href="#" data-toggle="modal" data-target="#mdlLoadViewSignature" onclick="abriModal('{{$key}}')">firmar</button>
                                                         </td>
                                                         <input class="d-none" value="{{$docFirmar->id}}" name="idFile{{$key}}" id="idFile{{$key}}" type="text">
@@ -129,6 +150,7 @@
                                                     <th scope="col">Ver documento</th>
                                                     <th scope="col">Firmantes</th>
                                                     <th scope="col">Creado</th>
+                                                    <th scope="col">Cancelar</th>
                                                     <th scope="col">Validar</th>                                        
                                                 </tr>
                                             </thead>
@@ -163,6 +185,9 @@
                                                         </td>
                                                         <td><small>{{$firmantes}}</small></td>
                                                         <td><small>{{$docFirmado->created_at->format('d-m-Y')}}</small></td>
+                                                        <td>
+                                                            <button type="button" onclick="cancelarDocumento('{{$docFirmado->id}}', '{{$nameArchivo}}', '{{$docFirmado->tipo_archivo}}', '{{$docFirmado->numero_o_clave}}')" class="btn btn-outline-danger">Cancelar</button>
+                                                        </td>
                                                         <td>
                                                             @if ($obj2['emisor']['_attributes']['email'] == $email)
                                                                 @if ($sendValidation)
@@ -199,28 +224,32 @@
                                                     <th scope="col">Firmantes</th>
                                                     <th scope="col">Creado</th>
                                                     <th scope="col">Validado</th>
+                                                    <th scope="col">Cancelar</th>
                                                     <th scope="col">Descargar</th>                                        
                                                 </tr>
                                             </thead>
     
                                             <tbody>
                                                 @foreach ($docsValidados as $docValidado)
-                                                @php
-                                                    $firmantes = '';
-                                                    $nameArchivo = '';
-                                                    $obj = json_decode($docValidado->obj_documento, true);
-                                                    $nameArchivo = $obj['archivo']['_attributes']['nombre_archivo'];
+                                                    @php
+                                                        $firmantes = '';
+                                                        $nameArchivo = '';
+                                                        $obj = json_decode($docValidado->obj_documento, true);
+                                                        $nameArchivo = $obj['archivo']['_attributes']['nombre_archivo'];
 
-                                                    foreach ($obj['firmantes']['firmante'][0] as $value) {
-                                                        $firmantes = $firmantes.$value['_attributes']['nombre_firmante'].', ';
-                                                    }
-                                                    $firmantes = substr($firmantes, 0, -2);
-                                                @endphp
+                                                        foreach ($obj['firmantes']['firmante'][0] as $value) {
+                                                            $firmantes = $firmantes.$value['_attributes']['nombre_firmante'].', ';
+                                                        }
+                                                        $firmantes = substr($firmantes, 0, -2);
+                                                    @endphp
                                                     <tr>
                                                         <td><small>{{$nameArchivo}}</small></td>
                                                         <td><small>{{$firmantes}}</small></td>
                                                         <td><small>{{$docValidado->created_at->format('d-m-Y')}}</small></td>
                                                         <td><small>{{$docValidado->fecha_sellado}}</small></td>
+                                                        <td>
+                                                            <button type="button" onclick="cancelarDocumento('{{$docValidado->id}}', '{{$nameArchivo}}', '{{$docValidado->tipo_archivo}}', '{{$docValidado->numero_o_clave}}')" class="btn btn-outline-danger">Cancelar</button>
+                                                        </td>
                                                         <td>
                                                             <button type="button" onclick="descargarDocumento('{{$docValidado->id}}')" class="btn btn-outline-success">Descargar</button>
                                                         </td>
@@ -237,10 +266,92 @@
                                     </div>
                                 @endif
                             </div>
+
+                            {{-- cancelados --}}
+                            <div class="tab-pane fade" id="nav-cancelados" role="tabpanel" aria-labelledby="nav-home-tab">
+                                @if ($docsCancelados != "[]")
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col">Nombre del documento</th>
+                                                    <th scope="col">Firmantes</th>
+                                                    <th scope="col">Creado</th>
+                                                    <th scope="col">Cancelado</th>
+                                                    <th scope="col">Motivo</th>
+                                                    <th scope="col">Canceló</th>
+                                                </tr>
+                                            </thead>
+    
+                                            <tbody>
+                                                @foreach ($docsCancelados as $docCancelado)
+                                                    @php
+                                                        $firmantes = '';
+                                                        $nameArchivo = '';
+                                                        $obj = json_decode($docCancelado->obj_documento, true);
+                                                        $objCancelado = json_decode($docCancelado->cancelacion, true);
+                                                        $nameArchivo = $obj['archivo']['_attributes']['nombre_archivo'];
+
+                                                        foreach ($obj['firmantes']['firmante'][0] as $value) {
+                                                            $firmantes = $firmantes.$value['_attributes']['nombre_firmante'].', ';
+                                                        }
+                                                        $firmantes = substr($firmantes, 0, -2);
+                                                    @endphp
+                                                    <tr>
+                                                        <td><small>{{$nameArchivo}}</small></td>
+                                                        <td><small>{{$firmantes}}</small></td>
+                                                        <td><small>{{$docCancelado->created_at->format('d-m-Y')}}</small></td>
+                                                        <td><small>{{$objCancelado['fecha']}}</small></td>
+                                                        <td><small>{{$objCancelado['motivo']}}</small></td>
+                                                        <td><small>{{$objCancelado['correo']}}</small></td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @else
+                                    <div class="row mt-3">
+                                        <div class="col d-flex justify-content-center">
+                                            <strong>Sin Documentos Cancelados</strong>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Modal -->
+            <div class="modal fade" id="modalCancel" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <form id="formCancel" action="{{ route('firma.cancelar') }}" method="post">
+                            @csrf
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalLongTitle"></h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label for="motivo">Motivo de Cancelación</label>
+                                    <textarea class="form-control" name="motivo" id="motivo" rows="4"></textarea>
+                                </div>
+                                <input class="d-none" type="text" name="txtIdCancel" id="txtIdCancel">
+                                <input class="d-none" type="text" name="txtTipo" id="txtTipo">
+                                <input class="d-none" type="text" name="txtClave" id="txtClave">
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                                <button type="submit" class="btn btn-primary">Cancelar Documento</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
             <form id="formUpdate" action="{{route('firma.update')}}" method="post">
                 @csrf
                 <input class="d-none" id="fechaFirmado" name="fechaFirmado" type="text">
@@ -373,7 +484,14 @@
             $('#formGenerarPDF').submit();
         }
 
-    </script>
+        function cancelarDocumento(id, name, tipo, clave) {
+            $('#exampleModalLongTitle').html('Cancelar ' + name);
+            $('#txtIdCancel').val(id);
+            $('#txtTipo').val(tipo);
+            $('#txtClave').val(clave);
+            $('#modalCancel').modal('toggle');
+        }
 
+    </script>
 
 @endsection

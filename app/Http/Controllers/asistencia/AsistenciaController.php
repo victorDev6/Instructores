@@ -154,7 +154,7 @@ class AsistenciaController extends Controller
 
                     $pdf = PDF::loadView('layouts.asistencia.reporteAsistencia', compact('curso', 'alumnos', 'mes', 'consec', 'meses'));
                     $pdf->setPaper('Letter', 'landscape');
-                    $file = "LISTA_ASISTENCIA_$clave.PDF";
+                    $file = "ASISTENCIA_$clave.PDF";
                     return $pdf->stream($file);
 
                     // if ($fecha_valida < 0) $message = "No prodece el registro de calificaciones, la fecha de termino del curso es el $curso->termino.";
