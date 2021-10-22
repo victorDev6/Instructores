@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use App\tbl_cursos;
+use App\Tokens_icti;
 // use BaconQrCode\Encoder\QrCode;
 use Illuminate\Support\Facades\Http;
 use Vyuldashev\XmlToArray\XmlToArray;
@@ -85,8 +86,11 @@ class FirmaController extends Controller {
         foreach ($docsFirmar as $value) {
             $value->base64xml = base64_encode($value->documento);
         }
+
+        $getToken = Tokens_icti::all()->last();
+        $token = $getToken->token;
         
-        return view('layouts.firmaElectronica.firmaElectronica', compact('docsFirmar', 'email', 'docsFirmados', 'docsValidados', 'docsCancelados', 'tipo_documento'));
+        return view('layouts.firmaElectronica.firmaElectronica', compact('docsFirmar', 'email', 'docsFirmados', 'docsValidados', 'docsCancelados', 'tipo_documento', 'token'));
     }
 
     public function update(Request $request) {
@@ -94,11 +98,17 @@ class FirmaController extends Controller {
 
         $obj_documento = json_decode($documento->obj_documento, true);
         $obj_documento_interno = json_decode($documento->obj_documento_interno, true);
+
+        if (empty($obj_documento['archivo']['_attributes']['md5_archivo'])) {
+            $obj_documento['archivo']['_attributes']['md5_archivo'] = $documento->md5_file;
+        }
+
         foreach ($obj_documento['firmantes']['firmante'][0] as $key => $value) {
             if ($value['_attributes']['curp_firmante'] == $request->curp) {
                 $value['_attributes']['fecha_firmado_firmante'] = $request->fechaFirmado;
                 $value['_attributes']['no_serie_firmante'] = $request->serieFirmante; 
                 $value['_attributes']['firma_firmante'] = $request->firma;
+                $value['_attributes']['certificado'] = $request->certificado;
                 $obj_documento['firmantes']['firmante'][0][$key] = $value;
             }
         }
@@ -107,6 +117,7 @@ class FirmaController extends Controller {
                 $value['_attributes']['fecha_firmado_firmante'] = $request->fechaFirmado;
                 $value['_attributes']['no_serie_firmante'] = $request->serieFirmante; 
                 $value['_attributes']['firma_firmante'] = $request->firma;
+                $value['_attributes']['certificado'] = $request->certificado;
                 $obj_documento_interno['firmantes']['firmante'][0][$key] = $value;
             }
         }
@@ -155,14 +166,16 @@ class FirmaController extends Controller {
 
     public function sellar(Request $request) {
         $documento = DocumentosFirmar::where('id', $request->txtIdFirmado)->first();
-
-        // dd($documento);
         $xmlBase64 = base64_encode($documento->documento);
-        $response = Http::post('https://interopera.chiapas.gob.mx/FirmadoElectronicoDocumentos/SellarXML', [
-            'xml_Final' => $xmlBase64
-        ]);
 
-        // dd($response->json());
+        $getToken = Tokens_icti::all()->last();
+
+        $response = $this->sellarFile($xmlBase64, $getToken->token);
+        if ($response->json() == null) {
+            $request = new Request();
+            $token = $this->generarToken($request);
+            $response = $this->sellarFile($xmlBase64, $token);
+        }
 
         if ($response->json()['status'] == 1) { //exitoso
             $decode = base64_decode($response->json()['xml']);
@@ -171,7 +184,8 @@ class FirmaController extends Controller {
                     'status' => 'VALIDADO',
                     'uuid_sellado' => $response->json()['uuid'],
                     'fecha_sellado' => $response->json()['fecha_Sellado'],
-                    'documento' => $decode
+                    'documento' => $decode,
+                    'cadena_sello' => $response->json()['cadenaSello']
                 ]);
             return redirect()->route('firma.inicio')->with('warning', 'Documento validado exitosamente!');
         } else {
@@ -182,6 +196,8 @@ class FirmaController extends Controller {
     public function generarPDF(Request $request) {
         $documento = DocumentosFirmar::where('id', $request->txtIdGenerar)->first();
         $objeto = json_decode($documento->obj_documento_interno,true);
+        $uuid = $documento->uuid_sellado;
+        $folio = $documento->nombre_archivo;
         $tipo_archivo = $documento->tipo_archivo;
         $totalFirmantes = $objeto['firmantes']['_attributes']['num_firmantes'];
 
@@ -341,18 +357,29 @@ class FirmaController extends Controller {
             }
         }
 
-        $locat = storage_path('app/public/qrcode/qrcode.png');
+        $verificacion = "https://innovacion.chiapas.gob.mx/validacionDocumentoPrueba/consulta/Certificado3?guid=$uuid&no_folio=$folio";
+        
+        $parts = explode('.', $folio);
+        $locat = storage_path("app/public/qrcode/$parts[0].png");
         $location = str_replace('\\','/', $locat);
-        \PHPQRCode\QRcode::png("Test", $location, 'L', 10, 0);
+        \PHPQRCode\QRcode::png($verificacion, $location, 'L', 10, 0);
 
         if ($tipo_archivo == 'Contrato') {
             $pdf->Image($location, 16, 270, 20, 20, "png");
             $pdf->Text(45, 275, 'Para verificar la integridad de este documento, favor de escanear el codigo QR o visitar el enlace:');
-            $pdf->Text(45, 280, 'https://ejemplo.chiapas.gob.mx');
+            $pdf->Text(45, 280, 'https://innovacion.chiapas.gob.mx/validaciondocumentoprueba');
+            $pdf->Text(45, 285, 'Guid: ');
+            $pdf->Text(55, 285, $uuid);
+            $pdf->Text(45, 289, 'Folio: ');
+            $pdf->Text(55, 289, $folio);
         } else {
             $pdf->Image($location, 16, 185, 20, 20, "png");
             $pdf->Text(45, 190, 'Para verificar la integridad de este documento, favor de escanear el codigo QR o visitar el enlace:');
-            $pdf->Text(45, 195, 'https://ejemplo.chiapas.gob.mx');
+            $pdf->Text(45, 195, 'https://innovacion.chiapas.gob.mx/validaciondocumentoprueba');
+            $pdf->Text(45, 200, 'Guid: ');
+            $pdf->Text(55, 200, $uuid);
+            $pdf->Text(45, 204, 'Folio: ');
+            $pdf->Text(55, 204, $folio);
         }
         $pdf->Output('I', 'FIRMADO_'.$objeto['archivo']['_attributes']['nombre_archivo']);
     }
@@ -386,6 +413,32 @@ class FirmaController extends Controller {
         } else {
             return redirect()->route('firma.inicio')->with('danger', 'Debe ingresar el motivo de cancelación');
         }
+    }
+
+    public function generarToken(Request $request) {
+        $resToken = Http::withHeaders([
+            'Accept' => 'application/json'
+        ])->post('https://interopera.chiapas.gob.mx/gobid/api/Auth/TokenAppAuth', [ 
+            'nombre' => 'Firma Electronica', 
+            'key' => '4E520F58-7103-479B-A2EC-FEE907409053' 
+        ]);
+
+        $token = $resToken->json();
+        Tokens_icti::create([
+            'token' => $token
+        ]);
+
+        return $token;
+    }
+
+    public function sellarFile($xml, $token) {
+        $response1 = Http::withHeaders([
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer '.$token
+        ])->post('https://apiprueba.firma.chiapas.gob.mx/FEA/v2/NotariaXML/sellarXML', [
+            'xml_Firmado' => $xml
+        ]);
+        return $response1;
     }
 
 }

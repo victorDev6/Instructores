@@ -27,6 +27,8 @@ class CreateDocumentosFirmarTable extends Migration
             $table->string('fecha_sellado')->nullable();
             $table->string('numero_o_clave')->nullable();
             $table->string('nombre_archivo')->nullable();
+            $table->text('md5_file')->nullable();
+            $table->text('cadena_sello')->nullable();
 
             $table->timestamps();
         });

@@ -16,6 +16,7 @@
 
 @section('content')
     <div class="d-none" id="vHTMLSignature"></div>
+    <input class="d-none" id="token" name="token" type="text" value="{{$token}}">
 
     <div class="container-fluid pt-3 px-0 py-0 mx-0 my-0">
         <div class="row">
@@ -359,6 +360,7 @@
                 <input class="d-none" id="firma" name="firma" type="text">
                 <input class="d-none" id="curp" name="curp" type="text">
                 <input class="d-none" id="idFile" name="idFile" type="text">
+                <input class="d-none" id="certificado" name="certificado" type="text">
             </form>
 
             <form id="formSellar" action="{{route('firma.sellar')}}" method="post">
@@ -376,58 +378,56 @@
 @endsection
 
 @section('js')
-    {{-- js bootstrap --}}
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/plugins/jquery-3.4.1/jquery-3.4.1.min.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/plugins/bootstrap-4.3.1/js/bootstrap.min.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/plugins/jasny-bootstrap4/js/jasny-bootstrap.min.js"></script>
 
-    {{-- js para poder firmar --}}
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/sjcl.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/sha1_002.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/llave.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/jsbn.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/jsbn2.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/rsa.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/rsa2.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/base64_002.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/crypto-1.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/asn1hex-1.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/rsasign-1.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/x509-1.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/pbkdf2.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/tripledes_002.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/aes.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/rc2.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/asn1.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/base64.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/hex_002.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/yahoo-min.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/hex.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/base64x-1.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/x64-core.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/tripledes.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/core.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/md5.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/sha1.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/sha256.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/ripemd160.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/sha512.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/enc-base64.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/hmac.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/pbkdf2_002.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/cipher-core.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/asn1-1.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/rsapem-1.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-sat/keyutil-1.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/plugins/jquery-3.4.1/jquery-3.4.1.min.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/plugins/bootstrap-4.3.1/js/bootstrap.min.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/plugins/jasny-bootstrap4/js/jasny-bootstrap.min.js"></script>
 
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/forge-0.7.1/forge-0.7.1.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-scg/mistake.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-scg/validate.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-scg/access.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-scg/dataSign.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/utilities-scg/dataTransportSign.js"></script>
-    <script src="https://www.firmaelectronica.chiapas.gob.mx/tools/library/signedjs-2.1/signature-spv015_doctos.js"></script>
-    
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/sjcl.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/sha1_002.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/llave.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/jsbn.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/jsbn2.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/rsa.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/rsa2.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/base64_002.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/crypto-1.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/asn1hex-1.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/rsasign-1.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/x509-1.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/pbkdf2.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/tripledes_002.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/aes.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/rc2.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/asn1.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/base64.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/hex_002.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/yahoo-min.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/hex.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/base64x-1.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/x64-core.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/tripledes.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/core.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/md5.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/sha1.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/sha256.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/ripemd160.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/sha512.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/enc-base64.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/hmac.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/pbkdf2_002.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/cipher-core.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/asn1-1.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/rsapem-1.js"></script> 
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/keyutil-1.js"></script>   
+
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/forge-0.7.1/forge-0.7.1.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-scg/mistake.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-scg/validate.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-scg/access.js"></script> 
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-scg/dataSign.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-scg/dataTransportSign.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/signedjs-2.1/signature-spv021_doctos-prueba.js"></script>    
 
     <script>
         var cadena = '', xmlBase64 = '', curp = '', idFile = '';
@@ -438,45 +438,71 @@
         function abriModal(key) {
             $('#vHTMLSignature').removeClass('d-none');
             cadena = $('#cadena'+ key).val();
-            xmlBase64 = $('#xml'+ key).val();
+            // xmlBase64 = $('#xml'+ key).val();
             curp = $('#curp'+ key).val();
             idFile = $('#idFile' + key).val();
         }
 
         function firmar() {
-            var vresponseSignature = sign(
-                cadena,
-                xmlBase64,
-                curp,
-                $('#password').val(),
-                39,
-                'dwLChYOVylB9htqD9qIaSVHddKzWKiqXqmh7fFRHwFJk2x'
-            );
-            console.log(vresponseSignature);
+            var response = firmarDocumento($('#token').val());
+            if(response.codeResponse == '401') {
+                generarToken().then((value) => {
+                    response = firmarDocumento(value);
+                    continueProcess(response);
+                }).catch((error) => {
+                    continueProcess(response);
+                });
+            } else {
+                continueProcess(response);
+            }
+        }
 
-            if (vresponseSignature.statusResponse) {
-                $('#fechaFirmado').val(vresponseSignature.date);
-                $('#serieFirmante').val(vresponseSignature.certifiedSeries)
-                $('#firma').val(vresponseSignature.sign);
-                $('#curp').val(vresponseSignature.curp);
+        function firmarDocumento(token) {
+            var vresponseSignature = sign(cadena, curp, $('#txtpassword').val(), 39, token);
+            return vresponseSignature;
+        }
+
+        function generarToken() {
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    type: 'POST',
+                    url: "{{ url('/firma/token') }}",
+                    data: {
+                        'nombre': '',
+                        'key': '',
+                        '_token': $("meta[name='csrf-token']").attr("content"),
+                    },
+                    success: function(result) {
+                        resolve(result);
+
+                    },
+                    error: function(jqXHR, textStatus) {
+                        reject('error');
+                    }
+                });
+            }) 
+        }
+
+        function continueProcess(response) {
+            if (response.statusResponse) {
+                $('#fechaFirmado').val(response.date);
+                $('#serieFirmante').val(response.certifiedSeries)
+                $('#firma').val(response.sign);
+                $('#curp').val(curp);
+                $('#certificado').val(response.certificated)
                 $('#idFile').val(idFile);
                 $('#formUpdate').submit();
-                
             } else {
-                $('#txtcode').val(vresponseSignature.codeResponse);
-                $('#txtdescription').val(vresponseSignature.descriptionResponse);
-                var result = confirm(vresponseSignature.messageResponse);
-                if (result) {
-                    location.reload();
-                } else {
-                    location.reload();
-                }
+                confirm(response.messageResponse)
+                location.reload;
             }
         }
 
         function validardocumento(id) {
-            $('#txtIdFirmado').val(id);
-            $('#formSellar').submit();
+            if (confirm("¿Está seguro de enviar a validación el documento?") == true) {
+                $('#txtIdFirmado').val(id);
+                $('#formSellar').submit();
+            }
         }
 
         function descargarDocumento(id) {

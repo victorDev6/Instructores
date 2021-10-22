@@ -12,6 +12,8 @@ use Illuminate\Http\Request;
 use Spatie\ArrayToXml\ArrayToXml;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
+use App\Tokens_icti;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
@@ -39,10 +41,14 @@ class AddDocumentFirmaController extends Controller {
         return response()->json($firmante);
     }
 
+    // id_organo: 34
+    // id_clasificacionorgano: 3
+    // nombre: Instituto de Capacitación y Vinculación Tecnológica del Estado de Chiapas
     public function save(Request $request) {
         $dataEmisor = Auth::user()->tipo_usuario == 1 
             ? instructores::where('id', '=', Auth::user()->id_sivyc)->first()
             : Funcionarios::where('id', '=', Auth::user()->id_sivyc)->first();
+
         // on esta activo el switch
         if ($request->hasFile('doc')) {
             $curso = tbl_cursos::where('clave', $request->no_oficio)->first();
@@ -136,6 +142,9 @@ class AddDocumentFirmaController extends Controller {
                         array_push($arrayFirmantes, $temp);
                         array_push($arrayFirmantes2, $temp2);
                     }
+
+                    
+                    $md5 = md5_file($request->file('doc'), false);
     
                     $text = Pdf::getText($request->file('doc'), 'c:/Program Files/Git/mingw64/bin/pdftotext');
                     $text = str_replace("\f",' ',$text);
@@ -150,15 +159,18 @@ class AddDocumentFirmaController extends Controller {
                             '_attributes' => [
                                 'nombre_emisor' => $dataEmisor->nombre.' '.$dataEmisor->apellidoPaterno.' '.$dataEmisor->apellidoMaterno,
                                 'cargo_emisor' => Auth::user()->tipo_usuario == 1 ? 'INSTRUCTOR' : $dataEmisor->puesto,
-                                'dependencia_emisor' => 'INSTITUTO DE CAPACITACION Y VINCULACION TECNOLOGICA'
+                                'dependencia_emisor' => 'Instituto de Capacitación y Vinculación Tecnológica del Estado de Chiapas'
+                                // 'curp_emisor' => $dataEmisor->curp
                             ],
                         ],
                         'archivo' => [
                             '_attributes' => [
-                                'nombre_archivo' => $nameFileOriginal,
-                                'checksum_archivo' => utf8_encode($text)
+                                'nombre_archivo' => $nameFileOriginal
+                                // 'md5_archivo' => $md5
+                                // 'checksum_archivo' => utf8_encode($text)
                             ],
-                            'cuerpo' => ['Por medio de la presente me permito solicitar el archivo '.$nameFile]
+                            // 'cuerpo' => ['Por medio de la presente me permito solicitar el archivo '.$nameFile]
+                            'cuerpo' => [utf8_encode($text)]
                         ],
                         'firmantes' => [
                             '_attributes' => [
@@ -175,16 +187,19 @@ class AddDocumentFirmaController extends Controller {
                             '_attributes' => [
                                 'nombre_emisor' => $dataEmisor->nombre.' '.$dataEmisor->apellidoPaterno.' '.$dataEmisor->apellidoMaterno,
                                 'cargo_emisor' => Auth::user()->tipo_usuario == 1 ? 'INSTRUCTOR' : $dataEmisor->puesto,
-                                'dependencia_emisor' => 'INSTITUTO DE CAPACITACION Y VINCULACION TECNOLOGICA',
+                                'dependencia_emisor' => 'Instituto de Capacitación y Vinculación Tecnológica del Estado de Chiapas',
+                                'curp_emisor' => $dataEmisor->curp,
                                 'email' => Auth::user()->email
                             ],
                         ],
                         'archivo' => [
                             '_attributes' => [
-                                'nombre_archivo' => $nameFileOriginal,
-                                'checksum_archivo' => utf8_encode($text)
+                                'nombre_archivo' => $nameFileOriginal
+                                // 'md5_archivo' => $md5
+                                // 'checksum_archivo' => utf8_encode($text)
                             ],
-                            'cuerpo' => ['Por medio de la presente me permito solicitar el archivo '.$nameFile]
+                            // 'cuerpo' => ['Por medio de la presente me permito solicitar el archivo '.$nameFile]
+                            'cuerpo' => [utf8_encode($text)]
                         ],
                         'firmantes' => [
                             '_attributes' => [
@@ -207,10 +222,10 @@ class AddDocumentFirmaController extends Controller {
                     $result = ArrayToXml::convert($ArrayXml, [
                         'rootElementName' => 'DocumentoChis',
                         '_attributes' => [
-                            'version' => '1.0',
+                            'version' => '2.0',
                             'fecha_creacion' => $dateFormat,
                             'no_oficio' => $nameFile,
-                            'dependencia_origen' => 'INSTITUTO DE CAPACITACION Y VINCULACION TECNOLOGICA DEL ESTADO DE CHIAPAS',
+                            'dependencia_origen' => 'Instituto de Capacitación y Vinculación Tecnológica del Estado de Chiapas',
                             'asunto_docto' => $request->tipo_documento,
                             'tipo_docto' => Auth::user()->tipo_usuario == 1 ? 'ACS' : 'CNT',
                             'xmlns' => 'http://firmaelectronica.chiapas.gob.mx/GCD/DoctoGCD',
@@ -220,25 +235,33 @@ class AddDocumentFirmaController extends Controller {
                     $result2 = ArrayToXml::convert($ArrayXml2, [
                         'rootElementName' => 'DocumentoChis',
                         '_attributes' => [
-                            'version' => '1.0',
+                            'version' => '2.0',
                             'fecha_creacion' => $dateFormat,
                             'no_oficio' => $nameFile,
-                            'dependencia_origen' => 'INSTITUTO DE CAPACITACION Y VINCULACION TECNOLOGICA DEL ESTADO DE CHIAPAS',
+                            'dependencia_origen' => 'Instituto de Capacitación y Vinculación Tecnológica del Estado de Chiapas',
                             'asunto_docto' => $request->tipo_documento,
                             'tipo_docto' => Auth::user()->tipo_usuario == 1 ? 'ACS' : 'CNT',
                             'xmlns' => 'http://firmaelectronica.chiapas.gob.mx/GCD/DoctoGCD',
                         ],
                     ]);
-    
-                    // dd($result);
-    
+
                     $xmlBase64 = base64_encode($result);
-                    $response = Http::post('https://interopera.chiapas.gob.mx/FirmadoElectronicoDocumentos/api/v1/DocumentoXml/CadenaOriginalBase64', [
+                    $getToken = Tokens_icti::all()->last();
+                    if ($getToken) {
+                        $response = $this->getCadenaOriginal($xmlBase64, $getToken->token);
+                        if ($response->json() == null) {
+                            $token = $this->generarToken();
+                            $response = $this->getCadenaOriginal($xmlBase64, $token);
+                        }
+                    } else { // no hay registros
+                        $token = $this->generarToken();
+                        $response = $this->getCadenaOriginal($xmlBase64, $token);
+                    }
+                    
+                    /* $response = Http::post(env('cadena_original', ''), [
                         'xml_OriginalBase64' => $xmlBase64,
                         'apiKey' => 'dwLChYOVylB9htqD9qIaSVHddKzWKiqXqmh7fFRHwFJk2x'
-                    ]);
-    
-                    // dd($response->json());
+                    ]); */
     
                     if ($response->json()['cadenaOriginal'] != null) {
                         $urlFile = $this->uploadFileServer($request->file('doc'), $nameFileOriginal);
@@ -255,6 +278,7 @@ class AddDocumentFirmaController extends Controller {
                         $dataInsert->nombre_archivo = $datas[1];
                         $dataInsert->documento = $result;
                         $dataInsert->documento_interno = $result2;
+                        $dataInsert->md5_file = $md5;
                         $dataInsert->save();
     
                         return redirect()->route('addDocument.inicio')->with('warning', 'Se agrego el documento correctamente, puede ver el status en el que se encuentra en el apartado Firma Electronica');
@@ -279,6 +303,36 @@ class AddDocumentFirmaController extends Controller {
         $file->storeAs('/uploadFiles/DocumentosFirmas/'.Auth::user()->id, $name);
         $url = Storage::url('/uploadFiles/DocumentosFirmas/'.Auth::user()->id.'/'.$name);
         return $url.'*'.$name;
+    }
+
+    //obtener el token
+    public function generarToken() {
+        $resToken = Http::withHeaders([
+            'Accept' => 'application/json'
+        ])->post('https://interopera.chiapas.gob.mx/gobid/api/Auth/TokenAppAuth', [ 
+            'nombre' => 'Firma Electronica', 
+            'key' => '4E520F58-7103-479B-A2EC-FEE907409053' 
+        ]);
+        $token = $resToken->json();
+
+        Tokens_icti::create([
+            'token' => $token
+        ]);
+        return $token;
+    }
+
+    // obtener la cadena original
+    public function getCadenaOriginal($xmlBase64, $token) {
+        // dd(config('app.cadena'));
+        // dd(Config::get('app.cadena', 'default'));
+        $response1 = Http::withHeaders([
+            'Accept' => 'application/json',
+            'Authorization' => 'Bearer '.$token,
+        ])->post('https://apiprueba.firma.chiapas.gob.mx/FEA/v2/Tools/generar_cadena_original', [
+            'xml_OriginalBase64' => $xmlBase64
+        ]);
+
+        return $response1;
     }
 
 }
