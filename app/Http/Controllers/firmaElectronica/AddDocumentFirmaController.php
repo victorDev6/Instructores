@@ -264,18 +264,19 @@ class AddDocumentFirmaController extends Controller {
                     ]); */
     
                     if ($response->json()['cadenaOriginal'] != null) {
-                        $urlFile = $this->uploadFileServer($request->file('doc'), $nameFileOriginal);
-                        $datas = explode('*',$urlFile);
+                        // $urlFile = $this->uploadFileServer($request->file('doc'), $nameFileOriginal);
+                        $urlFile = $this->uploadFileServer($request->file('doc'), $nameFile);
+                        // $datas = explode('*',$urlFile);
     
                         $dataInsert = new DocumentosFirmar();
                         $dataInsert->obj_documento = json_encode($ArrayXml);
                         $dataInsert->obj_documento_interno = json_encode($ArrayXml2);
                         $dataInsert->status = 'EnFirma';
-                        $dataInsert->link_pdf = $datas[0];
+                        $dataInsert->link_pdf = $urlFile;
                         $dataInsert->cadena_original = $response->json()['cadenaOriginal'];
                         $dataInsert->tipo_archivo = $request->tipo_documento;
                         $dataInsert->numero_o_clave = $request->no_oficio;
-                        $dataInsert->nombre_archivo = $datas[1];
+                        $dataInsert->nombre_archivo = $nameFile;
                         $dataInsert->documento = $result;
                         $dataInsert->documento_interno = $result2;
                         $dataInsert->md5_file = $md5;
@@ -297,12 +298,10 @@ class AddDocumentFirmaController extends Controller {
     }
 
     protected function uploadFileServer($file, $name) {
-        // $extensionFile = $file->getClientOriginalExtension();
-        // $path = '/'.$subPath;
-        $name = trim(date('YmdHis').'_'.$name);
+        // $name = trim(date('YmdHis').'_'.$name);
         $file->storeAs('/uploadFiles/DocumentosFirmas/'.Auth::user()->id, $name);
         $url = Storage::url('/uploadFiles/DocumentosFirmas/'.Auth::user()->id.'/'.$name);
-        return $url.'*'.$name;
+        return $url;
     }
 
     //obtener el token
