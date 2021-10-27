@@ -233,6 +233,8 @@
                         <input type="text" class="d-none" name="firmas[]" value="${tipo}-${result['id']}" input">
                     </div>
                 `;
+            $('#tipoUser').val('');
+            $('#email').val('');
         }
 
         $('#form').validate({
