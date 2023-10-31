@@ -31,7 +31,7 @@ class CalificacionesController extends Controller {
         $alumnos = [];
         $denegado = '';
         if ($curso) {
-            if ($curso->id_instructor == Auth::user()->id_sivyc) {
+            if ($curso->id_instructor != Auth::user()->id_sivyc) {
                 if (Auth::user()->unidad == 1) $fecha_penultimo = date("Y-m-d", strtotime($curso->termino . "- 3 days"));
                 else $fecha_penultimo = date("Y-m-d", strtotime($curso->termino . "- 1 days"));
                 $fecha_valida =  strtotime($fecha_hoy) - strtotime($fecha_penultimo);
@@ -68,7 +68,7 @@ class CalificacionesController extends Controller {
                     ->where('id', $key)
                     ->update(['calificacion' => $val,'iduser_updated'=>Auth::user()->id]);
             }
-            if($result) $message = "Calificaciones guardadas exitosamente!";        
+            if($result) $message = "Calificaciones guardadas exitosamente!";
         }else $message = "No existen cambios que guardar.";
 
         return redirect('/Calificaciones/inicio')->with(['message'=>$message, 'clave'=>$clave]);
@@ -87,7 +87,7 @@ class CalificacionesController extends Controller {
             // if($_SESSION['unidades']) $curso = $curso->whereIn('u.ubicacion',$_SESSION['unidades']);
             $curso = $curso->leftjoin('tbl_unidades as u','u.unidad','tbl_cursos.unidad')->first();
             if($curso) {
-                $consec_curso = $curso->id_curso; 
+                $consec_curso = $curso->id_curso;
                 $fecha_termino = $curso->inicio;
                 $alumnos = DB::connection('pgsql')->table('tbl_inscripcion as i')->select(
                         'i.matricula',
@@ -102,11 +102,11 @@ class CalificacionesController extends Controller {
                     return "NO HAY ALUMNOS INSCRITOS";
                     exit;
                 }
-                
-                tbl_cursos::where('id', $curso->id)->update(['calif_finalizado' => true]); 
-                              
+
+                tbl_cursos::where('id', $curso->id)->update(['calif_finalizado' => true]);
+
                 $consec = 1;
-                $pdf = PDF::loadView('layouts.calificaciones.pdfCalificaciones', compact('curso','alumnos','consec'));        
+                $pdf = PDF::loadView('layouts.calificaciones.pdfCalificaciones', compact('curso','alumnos','consec'));
                 $pdf->setPaper('Letter', 'landscape');
                 $file = "CALIFICACIONES_$clave.PDF";
                 return $pdf->download($file);

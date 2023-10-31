@@ -8,13 +8,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class RegistroController extends Controller {
-    
+
     public function index() {
         // $organos = DB::table('organos')->where('id', '!=', 5) ->get();
         return view('layouts.registro');
     }
 
     public function store(Request $request) {
+        // dd($request);
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             // 'organo' => ['required'],
@@ -35,6 +36,9 @@ class RegistroController extends Controller {
             // 'id_area' => $request->organo,
             'telefono' => $request->telefono,
             'email' => $request->email,
+            'tipo_usuario' => 0,
+            'curp' => ' ',
+            'id_sivyc' => '10',
             'password' => Hash::make($request->password),
         ])->assignRole($request->unidades);
 

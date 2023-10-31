@@ -9,9 +9,9 @@
         }
 
     </style>
-    <link rel="stylesheet" type="text/css" href="https://www.firmaelectronica.chiapas.gob.mx/tools/plugins/bootstrap-4.3.1/css/bootstrap.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://www.firmaelectronica.chiapas.gob.mx/tools/plugins/jasny-bootstrap4/css/jasny-bootstrap.min.css" />
-    
+    <link rel="stylesheet" type="text/css" href="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/plugins/bootstrap-4.3.1/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/plugins/jasny-bootstrap4/css/jasny-bootstrap.min.css" />
+
 @endsection
 
 @section('content')
@@ -54,7 +54,7 @@
         <div class="card">
             <div class="card-header">Mis documentos</div>
             <div class="card-body px-0">
-                
+
                 <div class="row">
                     <div class="col">
                         {{-- encabezado --}}
@@ -66,7 +66,7 @@
                                 <a style="color: #FF5733" class="nav-item nav-link" id="nav-cancelados-tab" data-toggle="tab" href="#nav-cancelados" role="tab" aria-controls="nav-cancelados" aria-selected="false">Cancelados</a>
                             </div>
                         </nav>
-                        
+
                         {{-- contenido --}}
                         <div class="tab-content py-3 px-sm-0" id="nav-tabContent">
                             {{-- Por Firmar --}}
@@ -81,10 +81,10 @@
                                                     <th scope="col">Firmantes</th>
                                                     <th scope="col">Creado</th>
                                                     <th scope="col">Cancelar</th>
-                                                    <th scope="col">Firmar</th>                                           
+                                                    <th scope="col">Firmar</th>
                                                 </tr>
                                             </thead>
-    
+
                                             <tbody>
                                                 @foreach ($docsFirmar as $key => $docFirmar)
                                                     @php
@@ -152,10 +152,10 @@
                                                     <th scope="col">Firmantes</th>
                                                     <th scope="col">Creado</th>
                                                     <th scope="col">Cancelar</th>
-                                                    <th scope="col">Validar</th>                                        
+                                                    <th scope="col">Validar</th>
                                                 </tr>
                                             </thead>
-    
+
                                             <tbody>
                                                 @foreach ($docsFirmados as $docFirmado)
                                                     @php
@@ -226,10 +226,10 @@
                                                     <th scope="col">Creado</th>
                                                     <th scope="col">Validado</th>
                                                     <th scope="col">Cancelar</th>
-                                                    <th scope="col">Descargar</th>                                        
+                                                    <th scope="col">Descargar</th>
                                                 </tr>
                                             </thead>
-    
+
                                             <tbody>
                                                 @foreach ($docsValidados as $docValidado)
                                                     @php
@@ -283,7 +283,7 @@
                                                     <th scope="col">Canceló</th>
                                                 </tr>
                                             </thead>
-    
+
                                             <tbody>
                                                 @foreach ($docsCancelados as $docCancelado)
                                                     @php
@@ -374,7 +374,7 @@
             </form>
         </div>
     </div>
-    
+
 @endsection
 
 @section('js')
@@ -418,16 +418,16 @@
     <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/pbkdf2_002.js"></script>
     <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/cipher-core.js"></script>
     <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/asn1-1.js"></script>
-    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/rsapem-1.js"></script> 
-    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/keyutil-1.js"></script>   
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/rsapem-1.js"></script>
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-sat/keyutil-1.js"></script>
 
     <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/forge-0.7.1/forge-0.7.1.js"></script>
     <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-scg/mistake.js"></script>
     <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-scg/validate.js"></script>
-    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-scg/access.js"></script> 
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-scg/access.js"></script>
     <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-scg/dataSign.js"></script>
     <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/utilities-scg/dataTransportSign.js"></script>
-    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/signedjs-2.1/signature-spv021_doctos-prueba.js"></script>    
+    <script src="https://firmaelectronica.shyfpchiapas.gob.mx:8443/tools/library/signedjs-2.1/signature-spv021_doctos-prueba.js"></script>
 
     <script>
         var cadena = '', xmlBase64 = '', curp = '', idFile = '';
@@ -445,6 +445,7 @@
 
         function firmar() {
             var response = firmarDocumento($('#token').val());
+            console.log(response)
             if(response.codeResponse == '401') {
                 generarToken().then((value) => {
                     response = firmarDocumento(value);
@@ -458,7 +459,9 @@
         }
 
         function firmarDocumento(token) {
-            var vresponseSignature = sign(cadena, curp, $('#txtpassword').val(), 39, token);
+            var vresponseSignature = sign(cadena, curp, $('#txtpassword').val(), '39', token);
+            // RAQN770121HDFMZV08
+            console.log(curp)
             return vresponseSignature;
         }
 
@@ -480,7 +483,7 @@
                         reject('error');
                     }
                 });
-            }) 
+            })
         }
 
         function continueProcess(response) {
@@ -493,7 +496,7 @@
                 $('#idFile').val(idFile);
                 $('#formUpdate').submit();
             } else {
-                confirm(response.messageResponse)
+                confirm(response.messageResponse + ' ' + response.descriptionResponse)
                 location.reload;
             }
         }

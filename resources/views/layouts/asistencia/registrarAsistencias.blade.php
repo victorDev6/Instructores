@@ -8,16 +8,16 @@
             background-color: #541533;
         }
 
-        thead tr th { 
+        thead tr th {
             position: sticky;
             top: 0;
             z-index: 10;
             background-color: #ffffff;
         }
-        .table-responsive { 
+        .table-responsive {
             height:600px;
             overflow:scroll;
-        } 
+        }
 
         .static {
             position: sticky;
@@ -25,13 +25,13 @@
             z-index: 10;
             background-color: #ffffff;
         }
-        
+
 
     </style>
 @endsection
 
 @section('content')
-    
+
     <div class="container-fluid pt-4">
         @if ($messages = Session::get('success'))
             <div class="alert alert-success">
@@ -41,7 +41,7 @@
 
         {{ Form::open(['route' => 'asistencia.inicio', 'method' => 'get', 'id'=>'frm']) }}
         {{csrf_field()}}
-        
+
         <div class="card">
             <div class="card-header">Registar Asistencia</div>
             <div class="card-body">
@@ -128,7 +128,7 @@
                                                                     id="check + {{ $alumno->id }} + {{$dia}}">
                                                                 <label class="custom-control-label"
                                                                     for="check + {{ $alumno->id }} + {{$dia}}"></label>
-                                                            </div> 
+                                                            </div>
                                                         </td>
                                                     @endforeach
                                                 </tr>
@@ -170,8 +170,8 @@
         $('#btnGuardar').click(function () {
             if(confirm("¿Está seguro de guardar las asistencias?")==true){
                 $('#frm').attr('action', "{{route('asistencia.guardar')}}");
-                $('#frm').attr('method', "post"); 
-                $('#frm').submit(); 
+                $('#frm').attr('method', "post");
+                $('#frm').submit();
             }
         });
 
@@ -179,15 +179,15 @@
             var asis_finalizado = $('#asis_finalizado').val();
             if (!asis_finalizado) {
                 if(confirm('¿Esta seguro de generar la lista de asistencia? \n Ya no podra modificar las asistencias despues.') == true) {
-                    $('#frmPdf').attr('target', "_blanck");  
+                    $('#frmPdf').attr('target', "_blanck");
                     $('#frmPdf').submit();
-                    $('#btnGuardar').addClass('d-none'); 
+                    $('#btnGuardar').addClass('d-none');
                 }
             } else {
-                $('#frmPdf').attr('target', "_blanck");  
+                $('#frmPdf').attr('target', "_blanck");
                 $('#frmPdf').submit();
             }
-            
+
         });
     </script>
 @endsection

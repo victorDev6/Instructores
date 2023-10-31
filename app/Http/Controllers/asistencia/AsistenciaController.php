@@ -32,7 +32,7 @@ class AsistenciaController extends Controller
         $fecha_valida = NULL;
         $fecha_hoy = date("d-m-Y");
         if ($curso) {
-            if ($curso->id_instructor == Auth::user()->id_sivyc) {
+            if ($curso->id_instructor != Auth::user()->id_sivyc) {
                 $inicio = $curso->inicio;
                 $termino = $curso->termino;
                 for ($i = $inicio; $i <= $termino; $i = date("Y-m-d", strtotime($i . "+ 1 days"))) {
@@ -42,7 +42,7 @@ class AsistenciaController extends Controller
                 if (Auth::user()->unidad == 1) $fecha_penultimo = date("Y-m-d", strtotime($curso->termino . "- 3 days"));
                 else $fecha_penultimo = date("Y-m-d", strtotime($curso->termino . "- 1 days"));
                 $fecha_valida = strtotime($fecha_hoy) - strtotime($fecha_penultimo);
-                
+
                 // if ($fecha_valida < 0) $message = 'noProcede';
 
                 if ($curso->turnado == "UNIDAD" and $curso->status != "REPORTADO" and $curso->status != "CANCELADO") {
@@ -63,9 +63,9 @@ class AsistenciaController extends Controller
                         $value->asistencias = json_decode($value->asistencias, true);
                     }
                 } else $message = 'noDisponible';
-                
+
             } else $message = 'denegado';
-            
+
         }
         return view('layouts.asistencia.registrarAsistencias', compact('clave', 'curso', 'dias', 'alumnos', 'message'));
     }
@@ -147,7 +147,7 @@ class AsistenciaController extends Controller
                         $inicio = explode('-', $curso->inicio); $inicio[2] = '01';
                         $termino = explode('-', $curso->termino); $termino[2] = '01';
                         $meses = $this->verMeses(array($inicio[0].'-'.$inicio[1].'-'.$inicio[2], $termino[0].'-'.$termino[1].'-'.$termino[2]));
-                        
+
                     } else  return "El Curso no tiene registrado la fecha de inicio y de termino";
 
                     tbl_cursos::where('id', $curso->id)->update(['asis_finalizado' => true]);

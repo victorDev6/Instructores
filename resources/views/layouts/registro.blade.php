@@ -5,7 +5,7 @@
 
 @section('css')
     <style>
-        .colorTop { 
+        .colorTop {
             background-color: #541533;
         }
     </style>
@@ -70,22 +70,22 @@
                             {{-- organo --}}
                             <div class="form-group row">
                                 <label for="rol" class="col-md-4 col-form-label text-md-right">{{ __('Rol') }}</label>
-                                {{-- <div class="col-md-6">
+                                <div class="col-md-6">
                                     <select name="rol" id="rol" class="custom-select">
                                         <option value="">--SELECCIONAR--</option>
-                                        <option value="0">Areas</option>
-                                        <option value="1">Directores</option>
+                                        <option value="3">Instructor</option>
+                                        {{-- <option value="1">Directores</option>
                                         <option value="2">Validadores</option>
-                                        <option value="3">Direccion General</option>
+                                        <option value="3">Direccion General</option> --}}
                                     </select>
-                                </div> --}}
+                                </div>
                                 <div class="col">
                                     <div class="form-group">
                                         <div class="custom-control custom-checkbox">
-                                            <input type="checkbox" value="Areas" class="custom-control-input settings"
+                                            {{-- <input type="checkbox" value="Areas" class="custom-control-input settings"
                                                 name="unidades[]" id="Areas">
                                             <label class="custom-control-label"
-                                                for="Areas">Instructor</label>
+                                                for="Areas" value="instructor">Instructor</label> --}}
                                         </div>
                                     </div>
                                 </div>

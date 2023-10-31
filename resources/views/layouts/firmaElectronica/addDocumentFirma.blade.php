@@ -17,7 +17,7 @@
     margin: 0 auto;
     top: calc(50% - 24px);
   }
-  
+
   .bd-example-modal-lg .modal-dialog .modal-content{
     background-color: transparent;
     border: none;
@@ -70,7 +70,7 @@
                                     <option value="" selected>Tipo de Documento</option>
                                     <option value="Lista de asistencia">Lista de asistencia</option>
                                     <option value="Lista de calificaciones">Lista de calificaciones</option>
-                                    {{-- <option value="Contrato">Contrato</option> --}}
+                                    <option value="Contrato">Contrato</option>
                                 </select>
                             </div>
                         </div>
@@ -276,7 +276,7 @@
                 quienes.innerHTML = `
                     <div class="col">
                         <div class="alert alert-light text-center py-1" role="alert">
-                            <p class="py-0 my-0"><strong>¿Quienes firman la ${value}?</strong></p> 
+                            <p class="py-0 my-0"><strong>¿Quienes firman la ${value}?</strong></p>
                             <p class="py-0 my-0">* Titular del departamento academico</p>
                             <p class="py-0 my-0">* Instructor del curso</p>
                         </div>
@@ -285,7 +285,7 @@
             } else {
                 quienes.innerHTML = ``;
             }
-            
+
         });
     </script>
 @endsection

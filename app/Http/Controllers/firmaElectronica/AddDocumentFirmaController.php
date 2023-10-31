@@ -16,6 +16,7 @@ use App\Tokens_icti;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class AddDocumentFirmaController extends Controller {
 
@@ -29,7 +30,7 @@ class AddDocumentFirmaController extends Controller {
 
         if ($tipo == 1) { //tabla instructor
             $firmante = instructores::where('correo', '=', $email)
-                ->where('status', '=', 'Validado')
+                ->where('status', '=', 'VALIDADO') // Se cambio el status decia Validado
                 ->where('estado', '=', true)
                 ->first();
         } else { // tabla directorio
@@ -45,9 +46,11 @@ class AddDocumentFirmaController extends Controller {
     // id_clasificacionorgano: 3
     // nombre: Instituto de Capacitación y Vinculación Tecnológica del Estado de Chiapas
     public function save(Request $request) {
-        $dataEmisor = Auth::user()->tipo_usuario == 1 
+        // dd($request);
+        $dataEmisor = Auth::user()->tipo_usuario == 1
             ? instructores::where('id', '=', Auth::user()->id_sivyc)->first()
             : Funcionarios::where('id', '=', Auth::user()->id_sivyc)->first();
+        // dd($dataEmisor);
 
         // on esta activo el switch
         if ($request->hasFile('doc')) {
@@ -55,27 +58,27 @@ class AddDocumentFirmaController extends Controller {
             if ($curso){
                 if ($request->firmas != null) { // si hay firmantes, se crea el arreglo para el xml
                     $nameFileOriginal = $request->file('doc')->getClientOriginalName();
-                    $nameFile = trim(date('YmdHis').'_'.$nameFileOriginal);
+                    $numOficio = $nameFile = trim(date('YmdHis').'_'.$nameFileOriginal);
                     $numFirmantes = count($request->firmas);
-    
+
                     $arrayFirmantes = [];
                     $arrayFirmantes2 = [];
                     if ($request->firmare != null) {
                         $numFirmantes++;
-                        $temp = ['_attributes' => 
+                        $temp = ['_attributes' =>
                                     [
-                                        'curp_firmante' => $dataEmisor->curp, 
-                                        'nombre_firmante' => $dataEmisor->nombre.' '.$dataEmisor->apellidoPaterno.' '.$dataEmisor->apellidoMaterno, 
-                                        'email_firmante' => $dataEmisor->correo, 
+                                        'curp_firmante' => $dataEmisor->curp,
+                                        'nombre_firmante' => $dataEmisor->nombre.' '.$dataEmisor->apellidoPaterno.' '.$dataEmisor->apellidoMaterno,
+                                        'email_firmante' => $dataEmisor->correo,
                                         'tipo_firmante' => 'FM'
                                     ]
                                 ];
-    
-                        $temp2 = ['_attributes' => 
+
+                        $temp2 = ['_attributes' =>
                                     [
-                                        'curp_firmante' => $dataEmisor->curp, 
-                                        'nombre_firmante' => $dataEmisor->nombre.' '.$dataEmisor->apellidoPaterno.' '.$dataEmisor->apellidoMaterno, 
-                                        'email_firmante' => $dataEmisor->correo, 
+                                        'curp_firmante' => $dataEmisor->curp,
+                                        'nombre_firmante' => $dataEmisor->nombre.' '.$dataEmisor->apellidoPaterno.' '.$dataEmisor->apellidoMaterno,
+                                        'email_firmante' => $dataEmisor->correo,
                                         'tipo_firmante' => 'FM',
                                         'tipo_usuario' => Auth::user()->tipo_usuario,
                                         'puesto_firmante' => 'INSTRUCTOR',
@@ -87,25 +90,25 @@ class AddDocumentFirmaController extends Controller {
                         array_push($arrayFirmantes, $temp);
                         array_push($arrayFirmantes2, $temp2);
                     }
-    
+
                     foreach ($request->firmas as $firmante) {
                         $array = explode('-', $firmante);
                         if ($array[0] == 'Instructor') {
                             $dataFirmante = instructores::where('id', '=', $array[1])->first();
-                            $temp = ['_attributes' => 
+                            $temp = ['_attributes' =>
                                 [
-                                    'curp_firmante' => $dataFirmante->curp, 
-                                    'nombre_firmante' => $dataFirmante->nombre.' '.$dataFirmante->apellidoPaterno.' '.$dataFirmante->apellidoMaterno, 
-                                    'email_firmante' => $dataFirmante->correo, 
+                                    'curp_firmante' => $dataFirmante->curp,
+                                    'nombre_firmante' => $dataFirmante->nombre.' '.$dataFirmante->apellidoPaterno.' '.$dataFirmante->apellidoMaterno,
+                                    'email_firmante' => $dataFirmante->correo,
                                     'tipo_firmante' => 'FM'
                                 ]
                             ];
-    
-                            $temp2 = ['_attributes' => 
+
+                            $temp2 = ['_attributes' =>
                                 [
-                                    'curp_firmante' => $dataFirmante->curp, 
-                                    'nombre_firmante' => $dataFirmante->nombre.' '.$dataFirmante->apellidoPaterno.' '.$dataFirmante->apellidoMaterno, 
-                                    'email_firmante' => $dataFirmante->correo, 
+                                    'curp_firmante' => $dataFirmante->curp,
+                                    'nombre_firmante' => $dataFirmante->nombre.' '.$dataFirmante->apellidoPaterno.' '.$dataFirmante->apellidoMaterno,
+                                    'email_firmante' => $dataFirmante->correo,
                                     'tipo_firmante' => 'FM',
                                     'tipo_usuario' => 1,
                                     'puesto_firmante' => 'INSTRUCTOR',
@@ -116,20 +119,20 @@ class AddDocumentFirmaController extends Controller {
                             ];
                         } else {
                             $dataFirmante = Funcionarios::where('id', '=', $array[1])->first();
-                            $temp = ['_attributes' => 
+                            $temp = ['_attributes' =>
                                 [
-                                    'curp_firmante' => $dataFirmante->curp, 
-                                    'nombre_firmante' => $dataFirmante->nombre.' '.$dataFirmante->apellidoPaterno.' '.$dataFirmante->apellidoMaterno, 
-                                    'email_firmante' => $dataFirmante->email, 
+                                    'curp_firmante' => $dataFirmante->curp,
+                                    'nombre_firmante' => $dataFirmante->nombre.' '.$dataFirmante->apellidoPaterno.' '.$dataFirmante->apellidoMaterno,
+                                    'email_firmante' => $dataFirmante->email,
                                     'tipo_firmante' => 'FM'
                                 ]
                             ];
-    
-                            $temp2 = ['_attributes' => 
+
+                            $temp2 = ['_attributes' =>
                                 [
-                                    'curp_firmante' => $dataFirmante->curp, 
-                                    'nombre_firmante' => $dataFirmante->nombre.' '.$dataFirmante->apellidoPaterno.' '.$dataFirmante->apellidoMaterno, 
-                                    'email_firmante' => $dataFirmante->email, 
+                                    'curp_firmante' => $dataFirmante->curp,
+                                    'nombre_firmante' => $dataFirmante->nombre.' '.$dataFirmante->apellidoPaterno.' '.$dataFirmante->apellidoMaterno,
+                                    'email_firmante' => $dataFirmante->email,
                                     'tipo_firmante' => 'FM',
                                     'tipo_usuario' => 2,
                                     'puesto_firmante' => $dataFirmante->puesto,
@@ -143,17 +146,17 @@ class AddDocumentFirmaController extends Controller {
                         array_push($arrayFirmantes2, $temp2);
                     }
 
-                    
+
                     $md5 = md5_file($request->file('doc'), false);
-    
+
                     $text = Pdf::getText($request->file('doc'), 'c:/Program Files/Git/mingw64/bin/pdftotext');
-                    $text = str_replace("\f",' ',$text);
-                    
+                    $text = str_replace(["\r", "\n", "\f"], ' ', $text);
+
                     // otro metodo para leer el pddf
                     // $reader = new \Asika\Pdf2text;
                     // $text = $reader->decode($request->file('doc'));
                     // dd($text);
-    
+
                     $ArrayXml = [
                         'emisor' => [
                             '_attributes' => [
@@ -179,9 +182,9 @@ class AddDocumentFirmaController extends Controller {
                             'firmante' => [
                                 $arrayFirmantes
                             ]
-                        ], 
+                        ],
                     ];
-    
+
                     $ArrayXml2 = [
                         'emisor' => [
                             '_attributes' => [
@@ -208,9 +211,9 @@ class AddDocumentFirmaController extends Controller {
                             'firmante' => [
                                 $arrayFirmantes2
                             ]
-                        ], 
+                        ],
                     ];
-    
+
                     $date = Carbon::now();
                     $month = $date->month < 10 ? '0'.$date->month : $date->month;
                     $day = $date->day < 10 ? '0'.$date->day : $date->day;
@@ -218,26 +221,36 @@ class AddDocumentFirmaController extends Controller {
                     $minute = $date->minute < 10 ? '0'.$date->minute : $date->minute;
                     $second = $date->second < 10 ? '0'.$date->second : $date->second;
                     $dateFormat = $date->year.'-'.$month.'-'.$day.'T'.$hour.':'.$minute.':'.$second;
-                    
+
+                    // Se busca el numero de contrato para ponerlo en el no_oficio de laas propiedades DocmentoChis
+                    if($request->tipo_documento == 'Contrato') {
+                        $numOficio = DB::Connection('pgsql')->Table('contratos')
+                        ->Join('folios','folios.id_folios','contratos.id_folios')
+                        ->Join('tbl_cursos','tbl_cursos.id','folios.id_cursos')
+                        ->Where('clave',$request->no_oficio)
+                        ->VALUE('contratos.numero_contrato');
+                    }
+
+
                     $result = ArrayToXml::convert($ArrayXml, [
                         'rootElementName' => 'DocumentoChis',
                         '_attributes' => [
                             'version' => '2.0',
                             'fecha_creacion' => $dateFormat,
-                            'no_oficio' => $nameFile,
+                            'no_oficio' => $numOficio,
                             'dependencia_origen' => 'Instituto de Capacitación y Vinculación Tecnológica del Estado de Chiapas',
                             'asunto_docto' => $request->tipo_documento,
                             'tipo_docto' => Auth::user()->tipo_usuario == 1 ? 'ACS' : 'CNT',
                             'xmlns' => 'http://firmaelectronica.chiapas.gob.mx/GCD/DoctoGCD',
                         ],
                     ]);
-    
+
                     $result2 = ArrayToXml::convert($ArrayXml2, [
                         'rootElementName' => 'DocumentoChis',
                         '_attributes' => [
                             'version' => '2.0',
                             'fecha_creacion' => $dateFormat,
-                            'no_oficio' => $nameFile,
+                            'no_oficio' => $numOficio,
                             'dependencia_origen' => 'Instituto de Capacitación y Vinculación Tecnológica del Estado de Chiapas',
                             'asunto_docto' => $request->tipo_documento,
                             'tipo_docto' => Auth::user()->tipo_usuario == 1 ? 'ACS' : 'CNT',
@@ -253,21 +266,22 @@ class AddDocumentFirmaController extends Controller {
                             $token = $this->generarToken();
                             $response = $this->getCadenaOriginal($xmlBase64, $token);
                         }
-                    } else { // no hay registros
+                    } else {// no hay registros
+
                         $token = $this->generarToken();
                         $response = $this->getCadenaOriginal($xmlBase64, $token);
                     }
-                    
+
                     /* $response = Http::post(env('cadena_original', ''), [
                         'xml_OriginalBase64' => $xmlBase64,
                         'apiKey' => 'dwLChYOVylB9htqD9qIaSVHddKzWKiqXqmh7fFRHwFJk2x'
                     ]); */
-    
+
                     if ($response->json()['cadenaOriginal'] != null) {
                         // $urlFile = $this->uploadFileServer($request->file('doc'), $nameFileOriginal);
                         $urlFile = $this->uploadFileServer($request->file('doc'), $nameFile);
                         // $datas = explode('*',$urlFile);
-    
+
                         $dataInsert = new DocumentosFirmar();
                         $dataInsert->obj_documento = json_encode($ArrayXml);
                         $dataInsert->obj_documento_interno = json_encode($ArrayXml2);
@@ -281,7 +295,7 @@ class AddDocumentFirmaController extends Controller {
                         $dataInsert->documento_interno = $result2;
                         $dataInsert->md5_file = $md5;
                         $dataInsert->save();
-    
+
                         return redirect()->route('addDocument.inicio')->with('warning', 'Se agrego el documento correctamente, puede ver el status en el que se encuentra en el apartado Firma Electronica');
                     } else {
                         return redirect()->route('addDocument.inicio')->with('danger', 'Ocurrio un error al obtener la cadena original, por favor intente de nuevo');
@@ -308,11 +322,12 @@ class AddDocumentFirmaController extends Controller {
     public function generarToken() {
         $resToken = Http::withHeaders([
             'Accept' => 'application/json'
-        ])->post('https://interopera.chiapas.gob.mx/gobid/api/Auth/TokenAppAuth', [ 
-            'nombre' => 'Firma Electronica', 
-            'key' => '4E520F58-7103-479B-A2EC-FEE907409053' 
+        ])->post('https://interopera.chiapas.gob.mx/gobid/api/AppAuth/AppTokenAuth', [
+            'nombre' => 'FirmaElectronica',
+            'key' => '19106D6F-E91F-4C20-83F1-1700B9EBD553'
         ]);
         $token = $resToken->json();
+
 
         Tokens_icti::create([
             'token' => $token
