@@ -107,7 +107,7 @@ class AsistenciaController extends Controller
         return redirect()->route('asistencia.inicio')->with('success', 'ASISTENCIAS GUARDADAS EXITOSAMENTE!');
     }
 
-    public function asistenciaPdf(Request $request) {
+    public function asistenciaPdf(Request $request) { //a
         $clave = $request->clave2;
 
         if ($clave) {
